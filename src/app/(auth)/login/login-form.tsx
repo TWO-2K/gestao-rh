@@ -5,10 +5,17 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Card,
   CardContent,
@@ -16,6 +23,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+const EMAIL_LEMBRADO_KEY = "gestao-rh:email-lembrado";
 
 const schema = z.object({
   email: z.string().email("Informe um e-mail válido"),
@@ -26,12 +35,20 @@ type FormValues = z.infer<typeof schema>;
 
 export function LoginForm() {
   const router = useRouter();
+  const [emailLembrado] = useState(
+    () => (typeof window !== "undefined" && localStorage.getItem(EMAIL_LEMBRADO_KEY)) || ""
+  );
   const [erro, setErro] = useState<string | null>(null);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [lembrarAcesso, setLembrarAcesso] = useState(() => emailLembrado !== "");
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: emailLembrado, password: "" },
+  });
 
   async function onSubmit(values: FormValues) {
     setErro(null);
@@ -40,6 +57,11 @@ export function LoginForm() {
     if (error) {
       setErro("E-mail ou senha incorretos.");
       return;
+    }
+    if (lembrarAcesso) {
+      localStorage.setItem(EMAIL_LEMBRADO_KEY, values.email);
+    } else {
+      localStorage.removeItem(EMAIL_LEMBRADO_KEY);
     }
     router.replace("/vagas");
     router.refresh();
@@ -69,17 +91,43 @@ export function LoginForm() {
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              {...register("password")}
-            />
+            <InputGroup>
+              <InputGroupInput
+                id="password"
+                type={mostrarSenha ? "text" : "password"}
+                autoComplete="current-password"
+                {...register("password")}
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  aria-label={mostrarSenha ? "Ocultar senha" : "Ver senha"}
+                  onClick={() => setMostrarSenha((v) => !v)}
+                >
+                  {mostrarSenha ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
             {errors.password && (
               <p className="text-sm text-destructive">
                 {errors.password.message}
               </p>
             )}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="lembrar-acesso"
+              type="checkbox"
+              className="size-4 rounded border-input accent-primary"
+              checked={lembrarAcesso}
+              onChange={(e) => setLembrarAcesso(e.target.checked)}
+            />
+            <Label htmlFor="lembrar-acesso" className="font-normal text-muted-foreground">
+              Lembrar meu acesso
+            </Label>
           </div>
           {erro && <p className="text-sm text-destructive">{erro}</p>}
           <Button type="submit" disabled={isSubmitting} className="mt-2">

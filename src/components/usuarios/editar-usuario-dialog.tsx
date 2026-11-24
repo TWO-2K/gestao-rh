@@ -31,12 +31,14 @@ export function EditarUsuarioDialog({
   papelAtual,
   unidadeIdsAtuais,
   unidades,
+  papelAtor,
 }: {
   id: string;
   nomeAtual: string;
-  papelAtual: "admin_diretoria" | "recrutador";
+  papelAtual: "admin" | "diretoria" | "recrutador" | "gestor";
   unidadeIdsAtuais: string[];
   unidades: Opcao[];
+  papelAtor: "admin" | "diretoria" | "recrutador" | "gestor";
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -92,7 +94,11 @@ export function EditarUsuarioDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="recrutador">Recrutador(a)</SelectItem>
-                <SelectItem value="admin_diretoria">Diretoria (admin)</SelectItem>
+                <SelectItem value="diretoria">Diretoria</SelectItem>
+                <SelectItem value="gestor">Gestor(a) solicitante</SelectItem>
+                {(papelAtor === "admin" || papelAtual === "admin") && (
+                  <SelectItem value="admin">Administrador</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

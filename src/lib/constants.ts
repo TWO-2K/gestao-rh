@@ -11,6 +11,7 @@ export const MOTIVO_VAGA_LABEL: Record<string, string> = {
 };
 
 export const SITUACAO_VAGA_LABEL: Record<string, string> = {
+  pendente_aprovacao: "Pendente de aprovação",
   em_aberto: "Em aberto",
   fechado: "Fechado",
   cancelado: "Cancelado",
@@ -29,17 +30,22 @@ export const STATUS_SLA_BADGE_VARIANT: Record<string, string> = {
 };
 
 export const SITUACAO_BADGE_VARIANT: Record<string, string> = {
+  pendente_aprovacao: "bg-amber-500 text-white border-amber-500 dark:bg-amber-500 dark:border-amber-500",
   em_aberto: "bg-emerald-600 text-white border-emerald-600 dark:bg-emerald-500 dark:border-emerald-500",
   fechado: "bg-slate-500 text-white border-slate-500 dark:bg-slate-600 dark:border-slate-600",
   cancelado: "bg-red-600 text-white border-red-600 dark:bg-red-500 dark:border-red-500",
 };
 
 export const PAPEL_LABEL: Record<string, string> = {
-  admin_diretoria: "Diretoria",
+  admin: "Administrador",
+  diretoria: "Diretoria",
   recrutador: "Recrutador(a)",
+  gestor: "Gestor(a) solicitante",
 };
 
 export const PAPEL_BADGE_VARIANT: Record<string, string> = {
-  admin_diretoria: "bg-primary text-primary-foreground border-primary",
+  admin: "bg-red-600 text-white border-red-600 dark:bg-red-500 dark:border-red-500",
+  diretoria: "bg-primary text-primary-foreground border-primary",
   recrutador: "bg-blue-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500",
+  gestor: "bg-amber-600 text-white border-amber-600 dark:bg-amber-500 dark:border-amber-500",
 };

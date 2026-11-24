@@ -10,6 +10,7 @@ export async function getDashboardData() {
   const emAtraso = abertas.filter((v) => v.status_sla === "em_atraso");
   const suspensas = vagas.filter((v) => v.suspensa);
   const fechadas = vagas.filter((v) => v.situacao === "fechado");
+  const pendentesAprovacao = vagas.filter((v) => v.situacao === "pendente_aprovacao");
 
   const tempoMedioFechamento =
     fechadas.length > 0
@@ -64,9 +65,11 @@ export async function getDashboardData() {
     });
 
   return {
+    vagas,
     totalAbertas: abertas.length,
     totalEmAtraso: emAtraso.length,
     totalSuspensas: suspensas.length,
+    totalPendentesAprovacao: pendentesAprovacao.length,
     tempoMedioFechamento,
     porUnidade,
     porSetor,

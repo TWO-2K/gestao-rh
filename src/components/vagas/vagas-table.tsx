@@ -20,6 +20,8 @@ import {
 } from "@/lib/constants";
 import { VagaRowActions } from "./vaga-row-actions";
 import { VagaSheet } from "./vaga-sheet";
+import { SolicitarVagaSheet } from "./solicitar-vaga-sheet";
+import { AlertaExperiencia, diasRestantes } from "./alerta-experiencia";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import type { Database } from "@/types/database";
@@ -40,6 +42,9 @@ export function VagasTable({
   setores,
   funcionarios,
   cargoSetorMap,
+  somenteLeitura = false,
+  isGestor = false,
+  isAdmin = false,
 }: {
   vagas: VagaDetalhada[];
   unidades: Opcao[];
@@ -47,15 +52,25 @@ export function VagasTable({
   setores: Opcao[];
   funcionarios: Opcao[];
   cargoSetorMap: Record<string, string[]>;
+  somenteLeitura?: boolean;
+  isGestor?: boolean;
+  isAdmin?: boolean;
 }) {
   const [vagaSelecionada, setVagaSelecionada] = useState<VagaDetalhada | null>(null);
   const [modo, setModo] = useState<Mode>("view");
   const [sheetAberto, setSheetAberto] = useState(false);
+  const [vagaParaEditar, setVagaParaEditar] = useState<VagaDetalhada | null>(null);
+  const [editarAberto, setEditarAberto] = useState(false);
 
   function abrir(vaga: VagaDetalhada, mode: Mode) {
     setVagaSelecionada(vaga);
-    setModo(mode);
+    setModo(somenteLeitura ? "view" : mode);
     setSheetAberto(true);
+  }
+
+  function abrirEdicaoGestor(vaga: VagaDetalhada) {
+    setVagaParaEditar(vaga);
+    setEditarAberto(true);
   }
 
   if (vagas.length === 0) {
@@ -81,7 +96,12 @@ export function VagasTable({
             <TableHead>Dias em aberto</TableHead>
             <TableHead>Situação</TableHead>
             <TableHead>SLA</TableHead>
-            <TableHead>Candidato(a)</TableHead>
+            {!isGestor && (
+              <>
+                <TableHead>Experiência</TableHead>
+                <TableHead>Candidato(a)</TableHead>
+              </>
+            )}
             <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
@@ -120,23 +140,44 @@ export function VagasTable({
                   </Badge>
                 )}
               </TableCell>
-              <TableCell>{vaga.candidato_aprovado ?? "—"}</TableCell>
+              {!isGestor && (
+                <>
+                  <TableCell>
+                    {vaga.situacao !== "cancelado" && (
+                      <AlertaExperiencia
+                        data={
+                          (diasRestantes(vaga.periodo_experiencia_1) ?? -1) >= 0
+                            ? vaga.periodo_experiencia_1
+                            : vaga.periodo_experiencia_2
+                        }
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>{vaga.candidato_aprovado ?? "—"}</TableCell>
+                </>
+              )}
               <TableCell onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8"
-                    onClick={() => abrir(vaga, "edit")}
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                  <VagaRowActions
-                    vagaId={vaga.id}
-                    situacao={vaga.situacao}
-                    suspensa={vaga.suspensa}
-                  />
-                </div>
+                {!isGestor && (
+                  <div className="flex items-center gap-1">
+                    {!somenteLeitura && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        onClick={() => abrir(vaga, "edit")}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                    )}
+                    <VagaRowActions
+                      vagaId={vaga.id}
+                      situacao={vaga.situacao}
+                      suspensa={vaga.suspensa}
+                      isAdmin={isAdmin}
+                      somenteLeitura={somenteLeitura}
+                    />
+                  </div>
+                )}
               </TableCell>
             </TableRow>
           ))}
@@ -152,7 +193,37 @@ export function VagasTable({
         cargoSetorMap={cargoSetorMap}
         open={sheetAberto}
         onOpenChange={setSheetAberto}
+        somenteLeitura={somenteLeitura}
+        onEditarSolicitacao={
+          isGestor && vagaSelecionada
+            ? () => {
+                setSheetAberto(false);
+                abrirEdicaoGestor(vagaSelecionada);
+              }
+            : undefined
+        }
       />
+      {isGestor && (
+        <SolicitarVagaSheet
+          cargos={cargos}
+          setores={setores}
+          cargoSetorMap={cargoSetorMap}
+          vagaId={vagaParaEditar?.id}
+          defaultValues={
+            vagaParaEditar
+              ? {
+                  cargo_id: vagaParaEditar.cargo_id,
+                  setor_id: vagaParaEditar.setor_id,
+                  motivo: vagaParaEditar.motivo,
+                  horario_trabalho: vagaParaEditar.horario_trabalho ?? "",
+                  justificativa: vagaParaEditar.justificativa ?? "",
+                }
+              : undefined
+          }
+          open={editarAberto}
+          onOpenChange={setEditarAberto}
+        />
+      )}
     </div>
   );
 }

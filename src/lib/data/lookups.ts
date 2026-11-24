@@ -34,6 +34,22 @@ export async function getCargos() {
   return data ?? [];
 }
 
+// Lista paginada para a tela de Cadastros (a catálogo completo pode ter
+// centenas de cargos). getCargos() acima continua sem paginação, pois
+// alimenta os selects de formulário, que precisam de todas as opções.
+export async function getCargosPaginado(pagina: number, porPagina: number) {
+  const supabase = await createClient();
+  const from = (pagina - 1) * porPagina;
+  const to = from + porPagina - 1;
+  const { data, count, error } = await supabase
+    .from("cargos")
+    .select("id, nome", { count: "exact" })
+    .order("nome")
+    .range(from, to);
+  if (error) throw error;
+  return { data: data ?? [], total: count ?? 0 };
+}
+
 export async function getSetores() {
   const supabase = await createClient();
   const { data } = await supabase.from("setores").select("id, nome").order("nome");
@@ -50,13 +66,19 @@ export async function getFuncionarios() {
   return data ?? [];
 }
 
-export async function getAllFuncionarios() {
+// Lista paginada para a tela de Cadastros (o quadro de funcionários real
+// pode crescer para centenas de registros entre as unidades).
+export async function getFuncionariosPaginado(pagina: number, porPagina: number) {
   const supabase = await createClient();
-  const { data } = await supabase
+  const from = (pagina - 1) * porPagina;
+  const to = from + porPagina - 1;
+  const { data, count, error } = await supabase
     .from("funcionarios")
-    .select("id, nome, email, unidade_id, ativo")
-    .order("nome");
-  return data ?? [];
+    .select("id, nome, email, unidade_id, ativo", { count: "exact" })
+    .order("nome")
+    .range(from, to);
+  if (error) throw error;
+  return { data: data ?? [], total: count ?? 0 };
 }
 
 export async function getVagasAbertasPorSetor() {

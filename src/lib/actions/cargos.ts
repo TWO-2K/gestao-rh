@@ -58,3 +58,26 @@ export async function criarCargo(nome: string, setorIds: string[]) {
   revalidatePath("/cadastros");
   return { error: null };
 }
+
+export async function atualizarCargo(id: string, nome: string, setorIds: string[]) {
+  if (!nome.trim()) return { error: "Informe o nome do cargo" };
+  if (setorIds.length === 0) return { error: "Selecione ao menos um setor" };
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("cargos").update({ nome: nome.trim() }).eq("id", id);
+  if (error) return { error: error.message };
+
+  const { error: deleteError } = await supabase
+    .from("cargo_setor")
+    .delete()
+    .eq("cargo_id", id);
+  if (deleteError) return { error: deleteError.message };
+
+  const { error: vinculoError } = await supabase
+    .from("cargo_setor")
+    .insert(setorIds.map((setorId) => ({ cargo_id: id, setor_id: setorId })));
+  if (vinculoError) return { error: vinculoError.message };
+
+  revalidatePath("/cadastros");
+  return { error: null };
+}

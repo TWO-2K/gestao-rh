@@ -40,7 +40,7 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 const SENHA_DEMO = "Demo@12345";
 
 const USUARIOS = [
-  { email: "kevinkleyoficial@gmail.com", nome: "Kevin", papel: "admin_diretoria", unidades: [], senha: "325760022" },
+  { email: "kevinkleyoficial@gmail.com", nome: "Kevin", papel: "admin", unidades: [], senha: "325760022" },
   { email: "lanna@maisbarato.demo", nome: "Lanna", papel: "recrutador", unidades: [] },
   { email: "daniele@maisbarato.demo", nome: "Daniele", papel: "recrutador", unidades: ["Alcindo Cacela"] },
   { email: "cleise@maisbarato.demo", nome: "Cleise", papel: "recrutador", unidades: ["Matriz", "Grão Pará"] },

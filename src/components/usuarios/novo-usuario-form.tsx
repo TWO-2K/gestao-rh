@@ -30,16 +30,18 @@ type FuncionarioOpcao = { id: string; nome: string; email: string | null };
 export function NovoUsuarioForm({
   unidades,
   funcionarios,
+  papelAtor,
 }: {
   unidades: Opcao[];
   funcionarios: FuncionarioOpcao[];
+  papelAtor: "admin" | "diretoria" | "recrutador" | "gestor";
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [funcionarioId, setFuncionarioId] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [papel, setPapel] = useState<"admin_diretoria" | "recrutador">("recrutador");
+  const [papel, setPapel] = useState<"admin" | "diretoria" | "recrutador" | "gestor">("recrutador");
   const [unidadeIds, setUnidadeIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -141,13 +143,20 @@ export function NovoUsuarioForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="recrutador">Recrutador(a)</SelectItem>
-                <SelectItem value="admin_diretoria">Diretoria (admin)</SelectItem>
+                <SelectItem value="diretoria">Diretoria</SelectItem>
+                <SelectItem value="gestor">Gestor(a) solicitante</SelectItem>
+                {papelAtor === "admin" && (
+                  <SelectItem value="admin">Administrador</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label className="text-xs text-muted-foreground">Unidades com acesso</Label>
+            <Label className="text-xs text-muted-foreground">
+              Unidades com acesso
+              {papel === "gestor" && " (gestor usa a unidade do próprio cadastro de funcionário)"}
+            </Label>
             <div className="flex flex-wrap gap-3">
               {unidades.map((u) => (
                 <label key={u.id} className="flex items-center gap-1.5 text-sm">

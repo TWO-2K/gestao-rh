@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { PapelUsuario } from "@/types/database";
 
+// Estas actions usam o client de serviço (bypassa RLS), então a checagem de
+// papel precisa ficar aqui: diretoria só visualiza usuários, não cria/edita.
 async function exigirAdmin() {
   const supabase = await createClient();
   const {
@@ -17,15 +20,17 @@ async function exigirAdmin() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.papel !== "admin_diretoria") return { error: "Sem permissão" } as const;
-  return { error: null } as const;
+  if (profile?.papel !== "admin") {
+    return { error: "Sem permissão" } as const;
+  }
+  return { error: null, papel: profile.papel } as const;
 }
 
 export async function criarUsuario(input: {
   funcionarioId: string;
   email: string;
   senha: string;
-  papel: "admin_diretoria" | "recrutador";
+  papel: PapelUsuario;
   unidadeIds: string[];
 }) {
   const guard = await exigirAdmin();
@@ -83,7 +88,7 @@ export async function criarUsuario(input: {
 export async function atualizarUsuario(input: {
   id: string;
   nome: string;
-  papel: "admin_diretoria" | "recrutador";
+  papel: PapelUsuario;
   unidadeIds: string[];
 }) {
   const guard = await exigirAdmin();

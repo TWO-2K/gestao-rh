@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -47,16 +48,30 @@ import {
 } from "@/lib/constants";
 import { VagaForm } from "./vaga-form";
 import { VagaRowActions } from "./vaga-row-actions";
+import { AlertaExperiencia } from "./alerta-experiencia";
+import { getHistoricoVaga } from "@/lib/actions/vagas";
 import type { VagaFormValues } from "@/lib/validators/vaga";
 import type { Database } from "@/types/database";
 
 type VagaDetalhada = Database["public"]["Views"]["vagas_detalhada"]["Row"];
 type Opcao = { id: string; nome: string };
 type Mode = "view" | "edit" | "create";
+type HistoricoItem = {
+  id: string;
+  situacao_anterior: string | null;
+  situacao_nova: string;
+  alterado_em: string;
+  observacao: string | null;
+  profiles: { nome: string } | null;
+};
 
 function formatarData(data: string | null) {
   if (!data) return "—";
   return new Date(data + "T00:00:00").toLocaleDateString("pt-BR");
+}
+
+function formatarDataHora(data: string) {
+  return new Date(data).toLocaleString("pt-BR");
 }
 
 function Campo({
@@ -122,6 +137,8 @@ export function VagaSheet({
   trigger,
   open: openProp,
   onOpenChange: onOpenChangeProp,
+  somenteLeitura = false,
+  onEditarSolicitacao,
 }: {
   unidades: Opcao[];
   cargos: Opcao[];
@@ -133,6 +150,8 @@ export function VagaSheet({
   trigger?: React.ReactElement;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  somenteLeitura?: boolean;
+  onEditarSolicitacao?: () => void;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
@@ -142,11 +161,20 @@ export function VagaSheet({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [formDirty, setFormDirty] = useState(false);
   const [confirmarFechar, setConfirmarFechar] = useState(false);
+  const [historico, setHistorico] = useState<HistoricoItem[]>([]);
 
   useEffect(() => {
     if (open) setMode(initialMode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, vaga?.id, modeProp]);
+
+  useEffect(() => {
+    if (open && mode === "view" && vaga) {
+      getHistoricoVaga(vaga.id).then((result) => {
+        setHistorico((result.data as unknown as HistoricoItem[]) ?? []);
+      });
+    }
+  }, [open, mode, vaga]);
 
   useEffect(() => {
     if (!open) setFormDirty(false);
@@ -236,7 +264,19 @@ export function VagaSheet({
 
         {mode === "view" && vaga ? (
           <>
-            <div className="flex flex-col gap-8 px-6 pb-2">
+            <Tabs defaultValue="detalhes" className="flex-1 gap-0">
+              <div className="px-6">
+                <TabsList className="w-full">
+                  <TabsTrigger value="detalhes" className="flex-1">
+                    Detalhes
+                  </TabsTrigger>
+                  <TabsTrigger value="historico" className="flex-1">
+                    Histórico
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="detalhes" className="flex flex-col gap-8 px-6 pt-4 pb-2">
               <SecaoCard titulo="Informações gerais">
                 <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-2">
                   <Campo label="Unidade" icon={Building2}>
@@ -313,10 +353,20 @@ export function VagaSheet({
                       {formatarData(vaga.data_admissao)}
                     </Campo>
                     <Campo label="1º período de experiência" icon={CalendarCheck2}>
-                      {formatarData(vaga.periodo_experiencia_1)}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {formatarData(vaga.periodo_experiencia_1)}
+                        {vaga.situacao !== "cancelado" && (
+                          <AlertaExperiencia data={vaga.periodo_experiencia_1} />
+                        )}
+                      </div>
                     </Campo>
                     <Campo label="2º período de experiência" icon={CalendarCheck2}>
-                      {formatarData(vaga.periodo_experiencia_2)}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {formatarData(vaga.periodo_experiencia_2)}
+                        {vaga.situacao !== "cancelado" && (
+                          <AlertaExperiencia data={vaga.periodo_experiencia_2} />
+                        )}
+                      </div>
                     </Campo>
                   </div>
                 </SecaoCard>
@@ -335,20 +385,77 @@ export function VagaSheet({
                   </Campo>
                 </SecaoCard>
               )}
-            </div>
+              </TabsContent>
 
-            <SheetFooter className="flex-row flex-wrap items-center justify-between gap-2 px-6 py-4">
-              <VagaRowActions
-                vagaId={vaga.id}
-                situacao={vaga.situacao}
-                suspensa={vaga.suspensa}
-                variant="buttons"
-              />
-              <Button variant="outline" size="sm" onClick={() => setMode("edit")}>
-                <Pencil className="size-4" />
-                Editar
-              </Button>
-            </SheetFooter>
+              <TabsContent value="historico" className="flex flex-col gap-8 px-6 pt-4 pb-2">
+                {historico.length > 0 ? (
+                  <Card className="[--card-spacing:--spacing(5)]">
+                    <CardContent>
+                      <div className="flex flex-col">
+                        {historico.map((item, index) => {
+                          const isUltimo = index === historico.length - 1;
+                          const dotClassName = cn(
+                            "mt-1 size-2.5 shrink-0 rounded-full border-2 border-background",
+                            item.situacao_nova === "cancelado"
+                              ? "bg-red-600 dark:bg-red-500"
+                              : item.situacao_nova === "fechado"
+                                ? "bg-slate-500 dark:bg-slate-600"
+                                : "bg-emerald-600 dark:bg-emerald-500"
+                          );
+                          return (
+                            <div key={item.id} className="relative flex gap-3 pb-5 last:pb-0">
+                              {!isUltimo && (
+                                <div className="absolute top-3 left-[4.5px] h-full w-px bg-border" />
+                              )}
+                              <div className={dotClassName} />
+                              <div className="flex flex-col gap-0.5">
+                                <p className="text-sm font-medium">
+                                  {item.situacao_anterior
+                                    ? `${SITUACAO_VAGA_LABEL[item.situacao_anterior]} → ${SITUACAO_VAGA_LABEL[item.situacao_nova]}`
+                                    : `Vaga criada (${SITUACAO_VAGA_LABEL[item.situacao_nova]})`}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatarDataHora(item.alterado_em)}
+                                  {item.profiles?.nome ? ` · ${item.profiles.nome}` : ""}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma alteração registrada ainda.
+                  </p>
+                )}
+              </TabsContent>
+            </Tabs>
+
+            {!somenteLeitura && (
+              <SheetFooter className="flex-row flex-wrap items-center justify-between gap-2 px-6 py-4">
+                <VagaRowActions
+                  vagaId={vaga.id}
+                  situacao={vaga.situacao}
+                  suspensa={vaga.suspensa}
+                  variant="buttons"
+                />
+                <Button variant="outline" size="sm" onClick={() => setMode("edit")}>
+                  <Pencil className="size-4" />
+                  Editar
+                </Button>
+              </SheetFooter>
+            )}
+
+            {somenteLeitura && onEditarSolicitacao && vaga.situacao === "em_aberto" && (
+              <SheetFooter className="flex-row justify-end gap-2 px-6 py-4">
+                <Button variant="outline" size="sm" onClick={onEditarSolicitacao}>
+                  <Pencil className="size-4" />
+                  Editar solicitação
+                </Button>
+              </SheetFooter>
+            )}
           </>
         ) : (
           <div className="px-4 pb-4">

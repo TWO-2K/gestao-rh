@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/data/profile";
 import {
-  getAllFuncionarios,
   getAllUnidades,
+  getCargoSetorMap,
   getCargosComSetores,
+  getCargosPaginado,
+  getFuncionariosPaginado,
   getSetores,
   getVagasAbertasPorSetor,
 } from "@/lib/data/lookups";
@@ -18,45 +20,70 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CadastrosTabs } from "@/components/cadastros/cadastros-tabs";
 import { NovaUnidadeForm } from "@/components/cadastros/nova-unidade-form";
 import { UnidadeAtivoToggle } from "@/components/cadastros/unidade-ativo-switch";
+import { EditarUnidadeDialog } from "@/components/cadastros/editar-unidade-dialog";
 import { NovoFuncionarioForm } from "@/components/cadastros/novo-funcionario-form";
 import { FuncionarioAtivoToggle } from "@/components/cadastros/funcionario-ativo-switch";
+import { EditarFuncionarioDialog } from "@/components/cadastros/editar-funcionario-dialog";
 import { NovoCargoForm } from "@/components/cadastros/novo-cargo-form";
+import { EditarCargoDialog } from "@/components/cadastros/editar-cargo-dialog";
 import { NovoSetorForm } from "@/components/cadastros/novo-setor-form";
 import { SetorCard } from "@/components/cadastros/setor-card";
+import { PaginationControls } from "@/components/shared/pagination-controls";
 
-export default async function CadastrosPage() {
+const POR_PAGINA = 20;
+
+function paginaDaUrl(valor: string | undefined) {
+  const n = Number.parseInt(valor ?? "1", 10);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+export default async function CadastrosPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const params = await searchParams;
   const profile = await getCurrentProfile();
-  if (!profile || profile.papel !== "admin_diretoria") {
+  if (!profile || (profile.papel !== "admin" && profile.papel !== "diretoria")) {
     redirect("/vagas");
   }
+  // Diretoria só visualiza cadastros — não cria nem edita nada aqui.
+  const isAdmin = profile.papel === "admin";
 
-  const [unidades, cargosComSetores, funcionarios, setores, vagasAbertasPorSetor] =
-    await Promise.all([
-      getAllUnidades(),
-      getCargosComSetores(),
-      getAllFuncionarios(),
-      getSetores(),
-      getVagasAbertasPorSetor(),
-    ]);
+  const paginaCargos = paginaDaUrl(params.pagina_cargos);
+  const paginaFuncionarios = paginaDaUrl(params.pagina_funcionarios);
+
+  const [
+    unidades,
+    cargosComSetores,
+    { data: cargosOrdenados, total: totalCargos },
+    cargoSetorMap,
+    { data: funcionarios, total: totalFuncionarios },
+    setores,
+    vagasAbertasPorSetor,
+  ] = await Promise.all([
+    getAllUnidades(),
+    getCargosComSetores(),
+    getCargosPaginado(paginaCargos, POR_PAGINA),
+    getCargoSetorMap(),
+    getFuncionariosPaginado(paginaFuncionarios, POR_PAGINA),
+    getSetores(),
+    getVagasAbertasPorSetor(),
+  ]);
 
   const unidadeNomePorId = new Map(unidades.map((u) => [u.id, u.nome]));
+  const setorNomePorId = new Map(setores.map((s) => [s.id, s.nome]));
 
-  const cargosPorNome = new Map<string, string[]>();
   const cargosCountPorSetorId = new Map<string, number>();
   for (const row of cargosComSetores) {
-    const nomeCargo = (row.cargos as unknown as { nome: string } | null)?.nome;
-    const nomeSetor = (row.setores as unknown as { nome: string } | null)?.nome;
-    if (!nomeCargo || !nomeSetor) continue;
-    if (!cargosPorNome.has(nomeCargo)) cargosPorNome.set(nomeCargo, []);
-    cargosPorNome.get(nomeCargo)!.push(nomeSetor);
     cargosCountPorSetorId.set(row.setor_id, (cargosCountPorSetorId.get(row.setor_id) ?? 0) + 1);
   }
-  const cargosOrdenados = [...cargosPorNome.entries()].sort((a, b) =>
-    a[0].localeCompare(b[0])
-  );
+
+  const totalPaginasCargos = Math.max(1, Math.ceil(totalCargos / POR_PAGINA));
+  const totalPaginasFuncionarios = Math.max(1, Math.ceil(totalFuncionarios / POR_PAGINA));
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,19 +94,12 @@ export default async function CadastrosPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="unidades">
-        <TabsList>
-          <TabsTrigger value="unidades">Unidades</TabsTrigger>
-          <TabsTrigger value="setores">Setores</TabsTrigger>
-          <TabsTrigger value="cargos">Cargos</TabsTrigger>
-          <TabsTrigger value="funcionarios">Funcionários</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="unidades" className="flex flex-col gap-4">
-          <div className="flex justify-end">
-            <NovaUnidadeForm />
-          </div>
-
+      <CadastrosTabs
+        unidadesAction={isAdmin ? <NovaUnidadeForm /> : undefined}
+        setoresAction={isAdmin ? <NovoSetorForm /> : undefined}
+        cargosAction={isAdmin ? <NovoCargoForm setores={setores} /> : undefined}
+        funcionariosAction={isAdmin ? <NovoFuncionarioForm unidades={unidades} /> : undefined}
+        unidadesContent={
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {unidades.map((u) => (
               <Card key={u.id} className="border-t-4 border-t-primary">
@@ -99,19 +119,17 @@ export default async function CadastrosPage() {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <UnidadeAtivoToggle id={u.id} ativo={u.ativo} />
-                </CardContent>
+                {isAdmin && (
+                  <CardContent className="flex items-center gap-2">
+                    <EditarUnidadeDialog id={u.id} nome={u.nome} codigo={u.codigo} />
+                    <UnidadeAtivoToggle id={u.id} ativo={u.ativo} />
+                  </CardContent>
+                )}
               </Card>
             ))}
           </div>
-        </TabsContent>
-
-        <TabsContent value="setores" className="flex flex-col gap-4">
-          <div className="flex justify-end">
-            <NovoSetorForm />
-          </div>
-
+        }
+        setoresContent={
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {setores.map((s) => (
               <SetorCard
@@ -120,47 +138,59 @@ export default async function CadastrosPage() {
                 nome={s.nome}
                 cargosCount={cargosCountPorSetorId.get(s.id) ?? 0}
                 vagasAbertasCount={vagasAbertasPorSetor[s.id] ?? 0}
+                somenteLeitura={!isAdmin}
               />
             ))}
           </div>
-        </TabsContent>
-
-        <TabsContent value="cargos" className="flex flex-col gap-4">
-          <div className="flex justify-end gap-2">
-            <NovoCargoForm setores={setores} />
-          </div>
-
+        }
+        cargosContent={
           <div className="overflow-hidden rounded-md border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Cargo</TableHead>
                   <TableHead>Setores onde é usado</TableHead>
+                  {isAdmin && <TableHead className="w-28" />}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cargosOrdenados.map(([cargo, setoresDoCargo]) => (
-                  <TableRow key={cargo}>
-                    <TableCell className="font-medium">{cargo}</TableCell>
-                    <TableCell className="flex flex-wrap gap-1">
-                      {setoresDoCargo.map((s) => (
-                        <Badge key={s} variant="outline">
-                          {s}
-                        </Badge>
-                      ))}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {cargosOrdenados.map((cargo) => {
+                  const setorIdsDoCargo = cargoSetorMap[cargo.id] ?? [];
+                  return (
+                    <TableRow key={cargo.id}>
+                      <TableCell className="font-medium">{cargo.nome}</TableCell>
+                      <TableCell className="flex flex-wrap gap-1">
+                        {setorIdsDoCargo.map((setorId) => (
+                          <Badge key={setorId} variant="outline">
+                            {setorNomePorId.get(setorId) ?? "—"}
+                          </Badge>
+                        ))}
+                      </TableCell>
+                      {isAdmin && (
+                        <TableCell>
+                          <EditarCargoDialog
+                            id={cargo.id}
+                            nome={cargo.nome}
+                            setorIds={setorIdsDoCargo}
+                            setores={setores}
+                          />
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
+            <div className="px-4">
+              <PaginationControls
+                paginaAtual={paginaCargos}
+                totalPaginas={totalPaginasCargos}
+                paramName="pagina_cargos"
+              />
+            </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="funcionarios" className="flex flex-col gap-4">
-          <div className="flex justify-end">
-            <NovoFuncionarioForm unidades={unidades} />
-          </div>
-
+        }
+        funcionariosContent={
           <div className="overflow-hidden rounded-md border bg-card">
             <Table>
               <TableHeader>
@@ -169,7 +199,7 @@ export default async function CadastrosPage() {
                   <TableHead>E-mail</TableHead>
                   <TableHead>Unidade</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-32" />
+                  {isAdmin && <TableHead className="w-56" />}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -185,16 +215,34 @@ export default async function CadastrosPage() {
                         {f.ativo ? "Ativo" : "Inativo"}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <FuncionarioAtivoToggle id={f.id} ativo={f.ativo} />
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <EditarFuncionarioDialog
+                            id={f.id}
+                            nome={f.nome}
+                            email={f.email}
+                            unidadeId={f.unidade_id}
+                            unidades={unidades}
+                          />
+                          <FuncionarioAtivoToggle id={f.id} ativo={f.ativo} />
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            <div className="px-4">
+              <PaginationControls
+                paginaAtual={paginaFuncionarios}
+                totalPaginas={totalPaginasFuncionarios}
+                paramName="pagina_funcionarios"
+              />
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        }
+      />
     </div>
   );
 }

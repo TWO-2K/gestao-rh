@@ -10,11 +10,17 @@ export async function getCurrentProfile() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, nome, papel")
+    .select("id, nome, papel, funcionario_id")
     .eq("id", user.id)
     .single();
 
   return profile
     ? { ...profile, email: user.email ?? "" }
-    : { id: user.id, nome: user.email ?? "Usuário", papel: "recrutador" as const, email: user.email ?? "" };
+    : {
+        id: user.id,
+        nome: user.email ?? "Usuário",
+        papel: "recrutador" as const,
+        funcionario_id: null,
+        email: user.email ?? "",
+      };
 }

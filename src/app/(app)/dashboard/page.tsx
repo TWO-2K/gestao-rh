@@ -1,9 +1,11 @@
-import { AlertTriangle, Briefcase, Clock, PauseCircle } from "lucide-react";
+import { AlertTriangle, Briefcase, Clock, Hourglass, PauseCircle } from "lucide-react";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { getCurrentProfile } from "@/lib/data/profile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MOTIVO_VAGA_LABEL } from "@/lib/constants";
 import { VagasPorUnidadeChart } from "@/components/dashboard/vagas-por-unidade-chart";
 import { VagasPorSetorChart } from "@/components/dashboard/vagas-por-setor-chart";
+import { ExportarVagas } from "@/components/vagas/exportar-vagas";
 import {
   Alert,
   AlertDescription,
@@ -17,8 +19,20 @@ function formatarData(data: string | null) {
 
 export default async function DashboardPage() {
   const dados = await getDashboardData();
+  const profile = await getCurrentProfile();
+  const isAdmin = profile?.papel === "admin" || profile?.papel === "diretoria";
 
   const kpis = [
+    ...(isAdmin
+      ? [
+          {
+            label: "Pendentes de aprovação",
+            valor: dados.totalPendentesAprovacao,
+            icon: Hourglass,
+            cor: "text-amber-600",
+          },
+        ]
+      : []),
     {
       label: "Vagas abertas",
       valor: dados.totalAbertas,
@@ -47,11 +61,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Painel de Gestão</h1>
-        <p className="text-sm text-muted-foreground">
-          Visão consolidada de todas as unidades do Grupo +B.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold">Painel de Gestão</h1>
+          <p className="text-sm text-muted-foreground">
+            Visão consolidada de todas as unidades do Grupo +B.
+          </p>
+        </div>
+        <ExportarVagas vagas={dados.vagas} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

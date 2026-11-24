@@ -192,7 +192,7 @@ export function VagaForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col gap-6 text-sm [&_input]:text-sm [&_label]:text-sm [&_button[role=combobox]]:text-sm"
+      className="flex flex-col gap-6 text-sm [&_input]:text-sm [&_label]:text-xs [&_button[role=combobox]]:text-sm"
     >
       <Secao>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

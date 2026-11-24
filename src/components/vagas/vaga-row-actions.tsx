@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { alterarSituacaoVaga, alterarSuspensaoVaga } from "@/lib/actions/vagas";
+import { alterarSituacaoVaga, alterarSuspensaoVaga, aprovarVaga, rejeitarVaga } from "@/lib/actions/vagas";
 import type { SituacaoVaga } from "@/types/database";
 
 export function VagaRowActions({
@@ -19,15 +19,19 @@ export function VagaRowActions({
   situacao,
   suspensa,
   variant = "menu",
+  isAdmin = false,
+  somenteLeitura = false,
 }: {
   vagaId: string;
   situacao: SituacaoVaga;
   suspensa: boolean;
   variant?: "menu" | "buttons";
+  isAdmin?: boolean;
+  somenteLeitura?: boolean;
 }) {
   const router = useRouter();
 
-  async function alterar(situacaoNova: SituacaoVaga) {
+  async function alterar(situacaoNova: "em_aberto" | "fechado" | "cancelado") {
     const result = await alterarSituacaoVaga(vagaId, situacaoNova);
     if (result.error) {
       toast.error(result.error);
@@ -45,6 +49,55 @@ export function VagaRowActions({
     }
     toast.success(suspensa ? "Vaga reativada" : "Vaga suspensa");
     router.refresh();
+  }
+
+  async function aprovar() {
+    const result = await aprovarVaga(vagaId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Vaga aprovada e liberada para recrutamento");
+    router.refresh();
+  }
+
+  async function rejeitar() {
+    const motivo = window.prompt("Motivo da rejeição:");
+    if (!motivo || !motivo.trim()) return;
+    const result = await rejeitarVaga(vagaId, motivo);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Vaga rejeitada");
+    router.refresh();
+  }
+
+  if (situacao === "pendente_aprovacao" && isAdmin) {
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Button
+          size="sm"
+          onClick={aprovar}
+          className="bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+        >
+          <CheckCircle2 className="size-3.5" />
+          Aprovar
+        </Button>
+        <Button size="sm" variant="destructive" onClick={rejeitar}>
+          <XCircle className="size-3.5" />
+          Rejeitar
+        </Button>
+      </div>
+    );
+  }
+
+  if (situacao === "pendente_aprovacao") {
+    return null;
+  }
+
+  if (somenteLeitura) {
+    return null;
   }
 
   if (variant === "buttons") {

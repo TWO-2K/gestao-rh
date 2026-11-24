@@ -75,6 +75,7 @@ export type Database = {
       };
       funcionarios: {
         Row: {
+          assinatura_path: string | null;
           ativo: boolean;
           created_at: string;
           email: string | null;
@@ -84,6 +85,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          assinatura_path?: string | null;
           ativo?: boolean;
           created_at?: string;
           email?: string | null;
@@ -92,6 +94,7 @@ export type Database = {
           unidade_id?: string | null;
         };
         Update: {
+          assinatura_path?: string | null;
           ativo?: boolean;
           created_at?: string;
           email?: string | null;
@@ -473,13 +476,19 @@ export type Database = {
       };
     };
     Functions: {
+      fn_definir_minha_assinatura: { Args: { p_path: string }; Returns: undefined };
       fn_has_unidade_access: { Args: { p_unidade_id: string }; Returns: boolean };
       fn_is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      fn_is_my_unidade: { Args: { p_unidade_id: string }; Returns: boolean };
+      fn_is_recrutador: { Args: Record<PropertyKey, never>; Returns: boolean };
+      fn_is_super_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      fn_my_funcionario_id: { Args: Record<PropertyKey, never>; Returns: string };
+      fn_remover_minha_assinatura: { Args: Record<PropertyKey, never>; Returns: string };
     };
     Enums: {
       motivo_vaga: "substituicao" | "aumento_de_quadro";
-      papel_usuario: "admin_diretoria" | "recrutador";
-      situacao_vaga: "em_aberto" | "fechado" | "cancelado";
+      papel_usuario: "diretoria" | "recrutador" | "gestor" | "admin";
+      situacao_vaga: "em_aberto" | "fechado" | "cancelado" | "pendente_aprovacao";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -599,13 +608,13 @@ export const Constants = {
   public: {
     Enums: {
       motivo_vaga: ["substituicao", "aumento_de_quadro"],
-      papel_usuario: ["admin_diretoria", "recrutador"],
-      situacao_vaga: ["em_aberto", "fechado", "cancelado"],
+      papel_usuario: ["diretoria", "recrutador", "gestor", "admin"],
+      situacao_vaga: ["em_aberto", "fechado", "cancelado", "pendente_aprovacao"],
     },
   },
-} as const;
+} as const
 
-export type PapelUsuario = Database["public"]["Enums"]["papel_usuario"];
-export type MotivoVaga = Database["public"]["Enums"]["motivo_vaga"];
-export type SituacaoVaga = Database["public"]["Enums"]["situacao_vaga"];
-export type StatusSla = "no_prazo" | "em_atraso" | "suspenso";
+export type PapelUsuario = (typeof Constants.public.Enums.papel_usuario)[number]
+export type MotivoVaga = (typeof Constants.public.Enums.motivo_vaga)[number]
+export type SituacaoVaga = (typeof Constants.public.Enums.situacao_vaga)[number]
+export type StatusSla = "no_prazo" | "em_atraso" | "suspenso"

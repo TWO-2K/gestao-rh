@@ -20,9 +20,11 @@ import { BloqueioToggle } from "@/components/usuarios/bloqueio-toggle";
 
 export default async function UsuariosPage() {
   const profile = await getCurrentProfile();
-  if (!profile || profile.papel !== "admin_diretoria") {
+  if (!profile || (profile.papel !== "admin" && profile.papel !== "diretoria")) {
     redirect("/vagas");
   }
+  // Diretoria só visualiza usuários — não cria, edita, redefine senha ou bloqueia.
+  const isAdmin = profile.papel === "admin";
 
   const [usuarios, unidades, funcionarios] = await Promise.all([
     getUsuarios(),
@@ -46,7 +48,13 @@ export default async function UsuariosPage() {
             Contas de acesso ao sistema, papel e unidades que cada recrutador(a) pode ver.
           </p>
         </div>
-        <NovoUsuarioForm unidades={unidades} funcionarios={funcionariosDisponiveis} />
+        {isAdmin && (
+          <NovoUsuarioForm
+            unidades={unidades}
+            funcionarios={funcionariosDisponiveis}
+            papelAtor={profile.papel}
+          />
+        )}
       </div>
 
       <div className="overflow-hidden rounded-md border bg-card">
@@ -58,7 +66,7 @@ export default async function UsuariosPage() {
               <TableHead>Papel</TableHead>
               <TableHead>Unidades</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-96" />
+              {isAdmin && <TableHead className="w-96" />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,17 +95,20 @@ export default async function UsuariosPage() {
                     {u.bloqueado ? "Bloqueado" : "Ativo"}
                   </Badge>
                 </TableCell>
-                <TableCell className="flex gap-2">
-                  <EditarUsuarioDialog
-                    id={u.id}
-                    nomeAtual={u.nome}
-                    papelAtual={u.papel}
-                    unidadeIdsAtuais={u.unidades.map((un) => un.id)}
-                    unidades={unidades}
-                  />
-                  <RedefinirSenhaDialog id={u.id} />
-                  <BloqueioToggle id={u.id} bloqueado={u.bloqueado} />
-                </TableCell>
+                {isAdmin && (
+                  <TableCell className="flex gap-2">
+                    <EditarUsuarioDialog
+                      id={u.id}
+                      nomeAtual={u.nome}
+                      papelAtual={u.papel}
+                      unidadeIdsAtuais={u.unidades.map((un) => un.id)}
+                      unidades={unidades}
+                      papelAtor={profile.papel}
+                    />
+                    <RedefinirSenhaDialog id={u.id} />
+                    <BloqueioToggle id={u.id} bloqueado={u.bloqueado} />
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

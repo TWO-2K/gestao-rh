@@ -29,3 +29,15 @@ export const vagaFormSchema = z
   );
 
 export type VagaFormValues = z.infer<typeof vagaFormSchema>;
+
+// Subconjunto de campos que um gestor solicitante pode preencher no Portal do
+// Gestor — sem acesso a recrutador, situação, candidato ou datas de fechamento.
+export const solicitarVagaSchema = z.object({
+  cargo_id: z.string().uuid("Selecione o cargo"),
+  setor_id: z.string().uuid("Selecione o setor"),
+  motivo: z.enum(["substituicao", "aumento_de_quadro"]),
+  horario_trabalho: z.string().optional().or(z.literal("")),
+  justificativa: z.string().optional().or(z.literal("")),
+});
+
+export type SolicitarVagaValues = z.infer<typeof solicitarVagaSchema>;

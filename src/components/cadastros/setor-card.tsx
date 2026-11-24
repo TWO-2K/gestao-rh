@@ -33,11 +33,13 @@ export function SetorCard({
   nome,
   cargosCount,
   vagasAbertasCount,
+  somenteLeitura = false,
 }: {
   id: string;
   nome: string;
   cargosCount: number;
   vagasAbertasCount: number;
+  somenteLeitura?: boolean;
 }) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
@@ -94,28 +96,30 @@ export function SetorCard({
               <span className="text-xs text-muted-foreground">Vagas abertas</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => {
-                setNomeEditado(nome);
-                setEditOpen(true);
-              }}
-            >
-              <Pencil className="size-4" />
-              Editar
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </div>
+          {!somenteLeitura && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  setNomeEditado(nome);
+                  setEditOpen(true);
+                }}
+              >
+                <Pencil className="size-4" />
+                Editar
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

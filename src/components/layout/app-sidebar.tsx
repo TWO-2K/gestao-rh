@@ -26,17 +26,19 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   adminOnly?: boolean;
+  hideFromGestor?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/vagas", label: "Vagas", icon: Briefcase },
-  { href: "/dashboard", label: "Painel de Gestão", icon: LayoutDashboard },
-  { href: "/cadastros", label: "Cadastros", icon: Settings, adminOnly: true },
-  { href: "/usuarios", label: "Usuários", icon: Users, adminOnly: true },
+  { href: "/dashboard", label: "Painel de Gestão", icon: LayoutDashboard, hideFromGestor: true },
+  { href: "/cadastros", label: "Cadastros", icon: Settings, adminOnly: true, hideFromGestor: true },
+  { href: "/usuarios", label: "Usuários", icon: Users, adminOnly: true, hideFromGestor: true },
 ];
 
 export function AppSidebar({ nome, papel }: { nome: string; papel: string }) {
   const pathname = usePathname();
+  const isGestor = papel === "gestor";
 
   return (
     <Sidebar collapsible="icon">
@@ -61,7 +63,9 @@ export function AppSidebar({ nome, papel }: { nome: string; papel: string }) {
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV_ITEMS.filter(
-                (item) => !item.adminOnly || papel === "admin_diretoria"
+                (item) =>
+                  (!item.adminOnly || papel === "admin" || papel === "diretoria") &&
+                  (!isGestor || !item.hideFromGestor)
               ).map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
