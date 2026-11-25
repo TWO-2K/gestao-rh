@@ -18,12 +18,9 @@ import {
   STATUS_SLA_BADGE_VARIANT,
   STATUS_SLA_LABEL,
 } from "@/lib/constants";
-import { VagaRowActions } from "./vaga-row-actions";
 import { VagaSheet } from "./vaga-sheet";
 import { SolicitarVagaSheet } from "./solicitar-vaga-sheet";
-import { AlertaExperiencia, diasRestantes } from "./alerta-experiencia";
-import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { AlertaExperiencia, periodoExperienciaAtivo } from "./alerta-experiencia";
 import type { Database } from "@/types/database";
 
 type VagaDetalhada = Database["public"]["Views"]["vagas_detalhada"]["Row"];
@@ -102,7 +99,6 @@ export function VagasTable({
                 <TableHead>Candidato(a)</TableHead>
               </>
             )}
-            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -144,41 +140,12 @@ export function VagasTable({
                 <>
                   <TableCell>
                     {vaga.situacao !== "cancelado" && (
-                      <AlertaExperiencia
-                        data={
-                          (diasRestantes(vaga.periodo_experiencia_1) ?? -1) >= 0
-                            ? vaga.periodo_experiencia_1
-                            : vaga.periodo_experiencia_2
-                        }
-                      />
+                      <AlertaExperiencia {...periodoExperienciaAtivo(vaga)} />
                     )}
                   </TableCell>
                   <TableCell>{vaga.candidato_aprovado ?? "—"}</TableCell>
                 </>
               )}
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                {!isGestor && (
-                  <div className="flex items-center gap-1">
-                    {!somenteLeitura && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        onClick={() => abrir(vaga, "edit")}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                    )}
-                    <VagaRowActions
-                      vagaId={vaga.id}
-                      situacao={vaga.situacao}
-                      suspensa={vaga.suspensa}
-                      isAdmin={isAdmin}
-                      somenteLeitura={somenteLeitura}
-                    />
-                  </div>
-                )}
-              </TableCell>
             </TableRow>
           ))}
         </TableBody>

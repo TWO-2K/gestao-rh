@@ -271,6 +271,21 @@ export async function getHistoricoVaga(vagaId: string) {
   return { error: null, data };
 }
 
+export async function atualizarStatusExperiencia(
+  id: string,
+  periodo: 1 | 2,
+  status: "aprovado" | "reprovado"
+) {
+  const supabase = await createClient();
+  const update =
+    periodo === 1 ? { experiencia_1_status: status } : { experiencia_2_status: status };
+  const { error } = await supabase.from("vagas").update(update).eq("id", id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/vagas");
+  return { error: null };
+}
+
 export async function alterarSuspensaoVaga(
   id: string,
   suspensa: boolean,

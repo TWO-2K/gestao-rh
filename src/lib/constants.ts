@@ -36,6 +36,17 @@ export const SITUACAO_BADGE_VARIANT: Record<string, string> = {
   cancelado: "bg-red-600 text-white border-red-600 dark:bg-red-500 dark:border-red-500",
 };
 
+export const STATUS_EXPERIENCIA_LABEL: Record<string, string> = {
+  pendente: "Pendente",
+  aprovado: "Aprovado",
+  reprovado: "Reprovado",
+};
+
+export const STATUS_EXPERIENCIA_BADGE_VARIANT: Record<string, string> = {
+  aprovado: "bg-emerald-600 text-white border-emerald-600 dark:bg-emerald-500 dark:border-emerald-500",
+  reprovado: "bg-red-600 text-white border-red-600 dark:bg-red-500 dark:border-red-500",
+};
+
 export const PAPEL_LABEL: Record<string, string> = {
   admin: "Administrador",
   diretoria: "Diretoria",

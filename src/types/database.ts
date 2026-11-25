@@ -282,6 +282,8 @@ export type Database = {
           data_admissao: string | null;
           data_cancelamento: string | null;
           data_fechamento: string | null;
+          experiencia_1_status: Database["public"]["Enums"]["status_experiencia"];
+          experiencia_2_status: Database["public"]["Enums"]["status_experiencia"];
           gestor_id: string | null;
           horario_trabalho: string | null;
           id: string;
@@ -311,6 +313,8 @@ export type Database = {
           data_admissao?: string | null;
           data_cancelamento?: string | null;
           data_fechamento?: string | null;
+          experiencia_1_status?: Database["public"]["Enums"]["status_experiencia"];
+          experiencia_2_status?: Database["public"]["Enums"]["status_experiencia"];
           gestor_id?: string | null;
           horario_trabalho?: string | null;
           id?: string;
@@ -339,6 +343,8 @@ export type Database = {
           data_admissao?: string | null;
           data_cancelamento?: string | null;
           data_fechamento?: string | null;
+          experiencia_1_status?: Database["public"]["Enums"]["status_experiencia"];
+          experiencia_2_status?: Database["public"]["Enums"]["status_experiencia"];
           gestor_id?: string | null;
           horario_trabalho?: string | null;
           id?: string;
@@ -410,6 +416,8 @@ export type Database = {
           data_cancelamento: string | null;
           data_fechamento: string | null;
           dias_em_aberto: number | null;
+          experiencia_1_status: Database["public"]["Enums"]["status_experiencia"];
+          experiencia_2_status: Database["public"]["Enums"]["status_experiencia"];
           gestor_id: string | null;
           gestor_nome: string | null;
           horario_trabalho: string | null;
@@ -489,6 +497,7 @@ export type Database = {
       motivo_vaga: "substituicao" | "aumento_de_quadro";
       papel_usuario: "diretoria" | "recrutador" | "gestor" | "admin";
       situacao_vaga: "em_aberto" | "fechado" | "cancelado" | "pendente_aprovacao";
+      status_experiencia: "pendente" | "aprovado" | "reprovado";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -610,6 +619,7 @@ export const Constants = {
       motivo_vaga: ["substituicao", "aumento_de_quadro"],
       papel_usuario: ["diretoria", "recrutador", "gestor", "admin"],
       situacao_vaga: ["em_aberto", "fechado", "cancelado", "pendente_aprovacao"],
+      status_experiencia: ["pendente", "aprovado", "reprovado"],
     },
   },
 } as const
@@ -617,4 +627,5 @@ export const Constants = {
 export type PapelUsuario = (typeof Constants.public.Enums.papel_usuario)[number]
 export type MotivoVaga = (typeof Constants.public.Enums.motivo_vaga)[number]
 export type SituacaoVaga = (typeof Constants.public.Enums.situacao_vaga)[number]
+export type StatusExperiencia = (typeof Constants.public.Enums.status_experiencia)[number]
 export type StatusSla = "no_prazo" | "em_atraso" | "suspenso"

@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Briefcase,
   Building2,
   Calendar,
   CalendarCheck2,
+  CheckCircle2,
   Clock,
   FileText,
   Gauge,
@@ -14,6 +17,7 @@ import {
   Tags,
   User,
   UserCheck,
+  XCircle,
 } from "lucide-react";
 import {
   Sheet,
@@ -49,7 +53,7 @@ import {
 import { VagaForm } from "./vaga-form";
 import { VagaRowActions } from "./vaga-row-actions";
 import { AlertaExperiencia } from "./alerta-experiencia";
-import { getHistoricoVaga } from "@/lib/actions/vagas";
+import { atualizarStatusExperiencia, getHistoricoVaga } from "@/lib/actions/vagas";
 import type { VagaFormValues } from "@/lib/validators/vaga";
 import type { Database } from "@/types/database";
 
@@ -124,6 +128,55 @@ function vagaParaFormValues(vaga: VagaDetalhada): Partial<VagaFormValues> {
     data_admissao: vaga.data_admissao ?? "",
     observacoes: vaga.observacoes ?? "",
   };
+}
+
+function AcoesExperiencia({
+  vagaId,
+  periodo,
+  status,
+}: {
+  vagaId: string;
+  periodo: 1 | 2;
+  status: Database["public"]["Enums"]["status_experiencia"];
+}) {
+  const router = useRouter();
+
+  async function marcar(novoStatus: "aprovado" | "reprovado") {
+    const result = await atualizarStatusExperiencia(vagaId, periodo, novoStatus);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(
+      novoStatus === "aprovado" ? "Período de experiência aprovado" : "Período de experiência reprovado"
+    );
+    router.refresh();
+  }
+
+  if (status !== "pendente") return null;
+
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        size="icon"
+        variant="ghost"
+        className="size-6 text-emerald-600 hover:bg-emerald-600/10 hover:text-emerald-600 dark:text-emerald-500"
+        title="Aprovar período"
+        onClick={() => marcar("aprovado")}
+      >
+        <CheckCircle2 className="size-4" />
+      </Button>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="size-6 text-red-600 hover:bg-red-600/10 hover:text-red-600 dark:text-red-500"
+        title="Reprovar período"
+        onClick={() => marcar("reprovado")}
+      >
+        <XCircle className="size-4" />
+      </Button>
+    </div>
+  );
 }
 
 export function VagaSheet({
@@ -356,15 +409,45 @@ export function VagaSheet({
                       <div className="flex flex-wrap items-center gap-2">
                         {formatarData(vaga.periodo_experiencia_1)}
                         {vaga.situacao !== "cancelado" && (
-                          <AlertaExperiencia data={vaga.periodo_experiencia_1} />
+                          <AlertaExperiencia
+                            data={vaga.periodo_experiencia_1}
+                            status={vaga.experiencia_1_status}
+                          />
+                        )}
+                        {!somenteLeitura && vaga.periodo_experiencia_1 && vaga.situacao !== "cancelado" && (
+                          <AcoesExperiencia
+                            vagaId={vaga.id}
+                            periodo={1}
+                            status={vaga.experiencia_1_status}
+                          />
                         )}
                       </div>
                     </Campo>
                     <Campo label="2º período de experiência" icon={CalendarCheck2}>
                       <div className="flex flex-wrap items-center gap-2">
-                        {formatarData(vaga.periodo_experiencia_2)}
-                        {vaga.situacao !== "cancelado" && (
-                          <AlertaExperiencia data={vaga.periodo_experiencia_2} />
+                        {vaga.experiencia_1_status === "reprovado" ? (
+                          <span className="text-sm text-muted-foreground">
+                            Não se aplica (reprovado no 1º período)
+                          </span>
+                        ) : (
+                          <>
+                            {formatarData(vaga.periodo_experiencia_2)}
+                            {vaga.situacao !== "cancelado" && (
+                              <AlertaExperiencia
+                                data={vaga.periodo_experiencia_2}
+                                status={vaga.experiencia_2_status}
+                              />
+                            )}
+                            {!somenteLeitura &&
+                              vaga.periodo_experiencia_2 &&
+                              vaga.situacao !== "cancelado" && (
+                                <AcoesExperiencia
+                                  vagaId={vaga.id}
+                                  periodo={2}
+                                  status={vaga.experiencia_2_status}
+                                />
+                              )}
+                          </>
                         )}
                       </div>
                     </Campo>

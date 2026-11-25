@@ -46,6 +46,7 @@ const USUARIOS = [
   { email: "cleise@maisbarato.demo", nome: "Cleise", papel: "recrutador", unidades: ["Matriz", "Grão Pará"] },
   { email: "beatriz@maisbarato.demo", nome: "Beatriz", papel: "recrutador", unidades: ["MB Food", "Obra"] },
   { email: "shelly@maisbarato.demo", nome: "Shelly", papel: "recrutador", unidades: ["CD Corporativo", "CD Logística"] },
+  { email: "vinicius@maisbarato.demo", nome: "Vinícius", papel: "gestor", unidades: ["Alcindo Cacela"] },
 ];
 
 async function upsertFuncionarioDoUsuario({ nome, unidadeId }) {
@@ -193,6 +194,7 @@ async function main() {
   console.log(`${vagasMock.length} vagas de demonstração criadas.`);
   console.log(`\nLogin de teste: lanna@maisbarato.demo / ${SENHA_DEMO} (admin diretoria)`);
   console.log(`Demais recrutadoras: daniele, cleise, beatriz, shelly @maisbarato.demo / ${SENHA_DEMO}`);
+  console.log(`Gestor (Portal do Gestor): vinicius@maisbarato.demo / ${SENHA_DEMO}`);
 }
 
 main().catch((err) => {
