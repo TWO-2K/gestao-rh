@@ -5,9 +5,9 @@ Senha padrão para todos, salvo indicação contrária: `Demo@12345`.
 
 | Nome      | Perfil (papel)            | E-mail                      | Senha         | Observação |
 |-----------|----------------------------|------------------------------|---------------|------------|
-| Lanna     | `recrutador` (RH)          | lanna@maisbarato.demo        | Demo@12345    | Vê/gerencia vagas de todas as unidades |
-| Vinícius  | `gestor` (Portal do Gestor)| vinicius@maisbarato.demo     | Demo@12345    | Só solicita vaga para a unidade Alcindo Cacela, vinculado ao funcionário "Vinícius" |
-| Shelly    | `recrutador` (RH)          | shelly@maisbarato.demo       | Demo@12345    | Unidades: CD Corporativo, CD Logística |
+Lanna `recrutador` (RH) lanna@maisbarato.demo lanna.123 Vê/gerencia vagas de todas as unidades 
+Vinícius `gestor` (Portal do Gestor) vinicius@maisbarato.demo vinicius.123 Só solicita vaga para a unidade Alcindo Cacela, vinculado ao funcionário "Vinícius" 
+Shelly `recrutador` (RH) shelly@maisbarato.demo shelly.123 Unidades: CD Corporativo, CD Logística |
 
 Outras contas já existentes no seed (não pedidas, mas disponíveis para teste):
 

@@ -1,7 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { SlidersHorizontal } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,6 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SITUACAO_VAGA_LABEL } from "@/lib/constants";
 
@@ -28,6 +40,7 @@ export function VagasFiltros({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [drawerAberto, setDrawerAberto] = useState(false);
 
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -41,119 +54,169 @@ export function VagasFiltros({
     router.push(`${pathname}?${params.toString()}`);
   }
 
+  function limparFiltros() {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const key of ["unidade_id", "setor_id", "situacao", "suspensa", "pagina"]) {
+      params.delete(key);
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  const filtrosAtivos = [
+    searchParams.get("unidade_id"),
+    searchParams.get("setor_id"),
+    searchParams.get("situacao"),
+    searchParams.get("suspensa"),
+  ].filter((v) => v && v !== "todos").length;
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex flex-wrap items-center gap-2">
-      <Input
-        placeholder="Buscar por cargo, candidato ou gestor..."
-        defaultValue={searchParams.get("busca") ?? ""}
-        className="w-80 rounded-md shadow-sm"
-        onChange={(e) => {
-          const value = e.target.value;
-          if (debounceRef.current) clearTimeout(debounceRef.current);
-          debounceRef.current = setTimeout(() => setParam("busca", value || null), 400);
-        }}
-      />
-      {!somenteLeitura && (
-        <Select
-          value={searchParams.get("unidade_id") ?? "todos"}
-          onValueChange={(v) => setParam("unidade_id", v)}
-        >
-          <SelectTrigger className="w-44 rounded-md shadow-sm">
-            <SelectValue placeholder="Unidade">
-              {(value: string | null) =>
-                value && value !== "todos"
-                  ? unidades.find((u) => u.id === value)?.nome ?? "Unidade"
-                  : "Todas as unidades"
-              }
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todas as unidades</SelectItem>
-            {unidades.map((u) => (
-              <SelectItem key={u.id} value={u.id}>
-                {u.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+        <Input
+          placeholder="Buscar por cargo, candidato ou gestor..."
+          defaultValue={searchParams.get("busca") ?? ""}
+          className="w-80 rounded-md shadow-sm"
+          onChange={(e) => {
+            const value = e.target.value;
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(() => setParam("busca", value || null), 400);
+          }}
+        />
 
-      <Select
-        value={searchParams.get("setor_id") ?? "todos"}
-        onValueChange={(v) => setParam("setor_id", v)}
-      >
-        <SelectTrigger className="w-44 rounded-md shadow-sm">
-          <SelectValue placeholder="Setor">
-            {(value: string | null) =>
-              value && value !== "todos"
-                ? setores.find((s) => s.id === value)?.nome ?? "Setor"
-                : "Todos os setores"
+        <Sheet open={drawerAberto} onOpenChange={setDrawerAberto}>
+          <SheetTrigger
+            render={
+              <Button variant="outline" className="gap-2 rounded-md shadow-sm" />
             }
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="todos">Todos os setores</SelectItem>
-          {setores.map((s) => (
-            <SelectItem key={s.id} value={s.id}>
-              {s.nome}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+          >
+            <SlidersHorizontal className="size-4" />
+            Filtros
+            {filtrosAtivos > 0 && <Badge className="bg-foreground text-background">{filtrosAtivos}</Badge>}
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Filtros</SheetTitle>
+            </SheetHeader>
 
-      <Select
-        value={searchParams.get("situacao") ?? "todos"}
-        onValueChange={(v) => setParam("situacao", v)}
-      >
-        <SelectTrigger className="w-44 rounded-md shadow-sm">
-          <SelectValue placeholder="Situação">
-            {(value: string | null) =>
-              value && value !== "todos"
-                ? SITUACAO_VAGA_LABEL[value] ?? "Situação"
-                : "Todas as situações"
-            }
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="todos">Todas as situações</SelectItem>
-          {Object.entries(SITUACAO_VAGA_LABEL).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
-              {label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+            <div className="flex flex-col gap-4 px-4">
+              {!somenteLeitura && (
+                <div className="flex flex-col gap-1.5">
+                  <Select
+                    value={searchParams.get("unidade_id") ?? "todos"}
+                    onValueChange={(v) => setParam("unidade_id", v)}
+                  >
+                    <SelectTrigger className="w-full rounded-md shadow-sm">
+                      <SelectValue placeholder="Unidade">
+                        {(value: string | null) =>
+                          value && value !== "todos"
+                            ? unidades.find((u) => u.id === value)?.nome ?? "Unidade"
+                            : "Todas as unidades"
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todas as unidades</SelectItem>
+                      {unidades.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-      {!somenteLeitura && (
-        <Select
-          value={searchParams.get("suspensa") ?? "todos"}
-          onValueChange={(v) => setParam("suspensa", v)}
-        >
-          <SelectTrigger className="w-44 rounded-md shadow-sm">
-            <SelectValue placeholder="Suspensão">
-              {(value: string | null) =>
-                value === "sim"
-                  ? "Suspensas"
-                  : value === "nao"
-                    ? "Não suspensas"
-                    : "Suspensas e ativas"
-              }
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Suspensas e ativas</SelectItem>
-            <SelectItem value="sim">Suspensas</SelectItem>
-            <SelectItem value="nao">Não suspensas</SelectItem>
-          </SelectContent>
-        </Select>
-      )}
+              <div className="flex flex-col gap-1.5">
+                <Select
+                  value={searchParams.get("setor_id") ?? "todos"}
+                  onValueChange={(v) => setParam("setor_id", v)}
+                >
+                  <SelectTrigger className="w-full rounded-md shadow-sm">
+                    <SelectValue placeholder="Setor">
+                      {(value: string | null) =>
+                        value && value !== "todos"
+                          ? setores.find((s) => s.id === value)?.nome ?? "Setor"
+                          : "Todos os setores"
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os setores</SelectItem>
+                    {setores.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Select
+                  value={searchParams.get("situacao") ?? "todos"}
+                  onValueChange={(v) => setParam("situacao", v)}
+                >
+                  <SelectTrigger className="w-full rounded-md shadow-sm">
+                    <SelectValue placeholder="Situação">
+                      {(value: string | null) =>
+                        value && value !== "todos"
+                          ? SITUACAO_VAGA_LABEL[value] ?? "Situação"
+                          : "Todas as situações"
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todas as situações</SelectItem>
+                    {Object.entries(SITUACAO_VAGA_LABEL).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {!somenteLeitura && (
+                <div className="flex flex-col gap-1.5">
+                  <Select
+                    value={searchParams.get("suspensa") ?? "todos"}
+                    onValueChange={(v) => setParam("suspensa", v)}
+                  >
+                    <SelectTrigger className="w-full rounded-md shadow-sm">
+                      <SelectValue placeholder="Suspensão">
+                        {(value: string | null) =>
+                          value === "sim"
+                            ? "Suspensas"
+                            : value === "nao"
+                              ? "Não suspensas"
+                              : "Suspensas e ativas"
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Suspensas e ativas</SelectItem>
+                      <SelectItem value="sim">Suspensas</SelectItem>
+                      <SelectItem value="nao">Não suspensas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            <SheetFooter>
+              <SheetClose render={<Button variant="outline" onClick={limparFiltros} />}>
+                Limpar filtros
+              </SheetClose>
+              <SheetClose render={<Button />}>Aplicar</SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {!somenteLeitura && (
         <Tabs
-          value={searchParams.get("view") ?? "tabela"}
-          onValueChange={(v) => setParam("view", v === "tabela" ? null : v)}
+          value={searchParams.get("view") ?? "kanban"}
+          onValueChange={(v) => setParam("view", v === "kanban" ? null : v)}
         >
           <TabsList>
             <TabsTrigger value="tabela">Tabela</TabsTrigger>

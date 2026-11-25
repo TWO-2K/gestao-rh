@@ -40,7 +40,7 @@ export function NovoSetorForm() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" />}>Novo setor</DialogTrigger>
+      <DialogTrigger render={<Button />}>Novo setor</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Novo setor</DialogTitle>

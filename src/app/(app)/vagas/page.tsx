@@ -35,7 +35,7 @@ export default async function VagasPage({
   const isAdmin = profile.papel === "admin" || isDiretoria;
   // Diretoria só visualiza, aprova e rejeita — não edita dados da vaga.
   const somenteLeitura = isGestor || isDiretoria;
-  const ehKanban = params.view === "kanban" && !isGestor;
+  const ehKanban = params.view !== "tabela" && !isGestor;
 
   const paginaParam = Number.parseInt(params.pagina ?? "1", 10);
   const pagina = Number.isFinite(paginaParam) && paginaParam > 0 ? paginaParam : 1;
