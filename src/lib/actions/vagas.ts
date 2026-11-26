@@ -376,6 +376,56 @@ export async function rejeitarVaga(id: string, motivo: string) {
   return { error: null };
 }
 
+export async function cancelarVaga(id: string, motivo: string) {
+  const supabase = await createClient();
+  const { data: vaga, error: errVaga } = await supabase
+    .from("vagas")
+    .select("observacoes, gestor_id, numero, cargos(nome)")
+    .eq("id", id)
+    .single();
+  if (errVaga) return { error: errVaga.message };
+
+  const motivoTratado = motivo.trim();
+  const cancelamento = `Cancelado: ${motivoTratado}`;
+  const observacoes = vaga?.observacoes ? `${vaga.observacoes}\n${cancelamento}` : cancelamento;
+
+  const { error } = await supabase
+    .from("vagas")
+    .update({
+      situacao: "cancelado",
+      observacoes,
+      data_cancelamento: new Date().toISOString().slice(0, 10),
+    })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  if (vaga?.gestor_id) {
+    const { data: gestorProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("funcionario_id", vaga.gestor_id)
+      .maybeSingle();
+
+    if (gestorProfile) {
+      const cargoNome = vaga.cargos?.nome ?? "vaga";
+      const titulo = "Vaga cancelada";
+      const mensagem = `A solicitação de ${cargoNome} (nº ${vaga.numero}) foi cancelada: ${motivoTratado}.`;
+      await supabase.rpc("fn_criar_notificacao", {
+        p_destinatario_id: gestorProfile.id,
+        p_tipo: "vaga_cancelada",
+        p_titulo: titulo,
+        p_mensagem: mensagem,
+        p_vaga_id: id,
+      });
+      await enviarPush(gestorProfile.id, { titulo, mensagem, url: "/notificacoes" });
+    }
+  }
+
+  revalidatePath("/vagas");
+  return { error: null };
+}
+
 export async function getHistoricoVaga(vagaId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase

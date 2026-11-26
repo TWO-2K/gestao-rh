@@ -68,7 +68,12 @@ export type TipoNotificacao =
   | "vaga_fechada"
   | "vaga_rejeitada"
   | "vaga_aprovada"
-  | "vaga_pendente_aprovacao";
+  | "vaga_pendente_aprovacao"
+  | "vaga_cancelada"
+  | "experiencia_1_vencendo"
+  | "experiencia_2_vencendo"
+  | "vaga_sla_vencendo"
+  | "vaga_sla_atrasada";
 
 export const TIPO_NOTIFICACAO_LABEL: Record<string, string> = {
   teste: "Notificação de teste",
@@ -76,4 +81,9 @@ export const TIPO_NOTIFICACAO_LABEL: Record<string, string> = {
   vaga_rejeitada: "Solicitação rejeitada",
   vaga_aprovada: "Solicitação aprovada",
   vaga_pendente_aprovacao: "Aguardando aprovação",
+  vaga_cancelada: "Vaga cancelada",
+  experiencia_1_vencendo: "1º período de experiência vencendo",
+  experiencia_2_vencendo: "2º período de experiência vencendo",
+  vaga_sla_vencendo: "SLA da vaga vencendo",
+  vaga_sla_atrasada: "SLA da vaga atrasado",
 };
