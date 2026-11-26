@@ -7,6 +7,7 @@ import { criarFuncionario } from "@/lib/actions/funcionarios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -32,12 +33,13 @@ export function NovoFuncionarioForm({ unidades }: { unidades: Opcao[] }) {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [unidadeId, setUnidadeId] = useState("");
+  const [ehGestor, setEhGestor] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const result = await criarFuncionario(nome, unidadeId, email);
+    const result = await criarFuncionario(nome, unidadeId, email, ehGestor);
     setSubmitting(false);
     if (result.error) {
       toast.error(result.error);
@@ -47,6 +49,7 @@ export function NovoFuncionarioForm({ unidades }: { unidades: Opcao[] }) {
     setNome("");
     setEmail("");
     setUnidadeId("");
+    setEhGestor(false);
     setOpen(false);
     router.refresh();
   }
@@ -98,6 +101,10 @@ export function NovoFuncionarioForm({ unidades }: { unidades: Opcao[] }) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-xs text-muted-foreground">É gestor/diretor?</Label>
+            <Switch checked={ehGestor} onCheckedChange={setEhGestor} />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={submitting}>

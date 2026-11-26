@@ -198,6 +198,7 @@ export default async function CadastrosPage({
                   <TableHead>Nome</TableHead>
                   <TableHead>E-mail</TableHead>
                   <TableHead>Unidade</TableHead>
+                  <TableHead>Gestor</TableHead>
                   <TableHead>Status</TableHead>
                   {isAdmin && <TableHead className="w-56" />}
                 </TableRow>
@@ -209,6 +210,9 @@ export default async function CadastrosPage({
                     <TableCell>{f.email ?? "—"}</TableCell>
                     <TableCell>
                       {f.unidade_id ? unidadeNomePorId.get(f.unidade_id) ?? "—" : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {f.eh_gestor ? <Badge variant="outline">Gestor</Badge> : "—"}
                     </TableCell>
                     <TableCell>
                       <Badge variant={f.ativo ? "default" : "secondary"}>
@@ -223,6 +227,7 @@ export default async function CadastrosPage({
                             nome={f.nome}
                             email={f.email}
                             unidadeId={f.unidade_id}
+                            ehGestor={f.eh_gestor}
                             unidades={unidades}
                           />
                           <FuncionarioAtivoToggle id={f.id} ativo={f.ativo} />

@@ -26,7 +26,15 @@ export const vagaFormSchema = z
       message: "A data de admissão não pode ser anterior à abertura da vaga",
       path: ["data_admissao"],
     }
-  );
+  )
+  .refine((data) => !data.data_fechamento || !!data.data_admissao, {
+    message: "Informe a data de admissão para fechar a vaga",
+    path: ["data_admissao"],
+  })
+  .refine((data) => !data.data_fechamento || !!data.candidato_aprovado?.trim(), {
+    message: "Informe o(a) candidato(a) aprovado(a) para fechar a vaga",
+    path: ["candidato_aprovado"],
+  });
 
 export type VagaFormValues = z.infer<typeof vagaFormSchema>;
 

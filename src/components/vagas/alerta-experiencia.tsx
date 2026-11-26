@@ -33,6 +33,17 @@ export function periodoExperienciaAtivo(vaga: {
   return { data: vaga.periodo_experiencia_2, status: vaga.experiencia_2_status };
 }
 
+// Vaga fechada sem data de admissão: o período de experiência nunca é
+// calculado (é coluna gerada a partir de data_admissao), então sem este
+// aviso a célula/campo fica em branco, indistinguível de "não se aplica".
+export function AvisoAdmissaoFaltante() {
+  return (
+    <Badge variant="outline" className="border bg-amber-500 text-white border-amber-500 dark:bg-amber-500 dark:border-amber-500">
+      Admissão não informada
+    </Badge>
+  );
+}
+
 export function AlertaExperiencia({
   data,
   status = "pendente",

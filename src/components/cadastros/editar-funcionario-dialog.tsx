@@ -8,6 +8,7 @@ import { atualizarFuncionario } from "@/lib/actions/funcionarios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -31,12 +32,14 @@ export function EditarFuncionarioDialog({
   nome,
   email,
   unidadeId,
+  ehGestor,
   unidades,
 }: {
   id: string;
   nome: string;
   email: string | null;
   unidadeId: string | null;
+  ehGestor: boolean;
   unidades: Opcao[];
 }) {
   const router = useRouter();
@@ -44,12 +47,19 @@ export function EditarFuncionarioDialog({
   const [nomeEditado, setNomeEditado] = useState(nome);
   const [emailEditado, setEmailEditado] = useState(email ?? "");
   const [unidadeIdEditada, setUnidadeIdEditada] = useState(unidadeId ?? "");
+  const [ehGestorEditado, setEhGestorEditado] = useState(ehGestor);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const result = await atualizarFuncionario(id, nomeEditado, unidadeIdEditada, emailEditado);
+    const result = await atualizarFuncionario(
+      id,
+      nomeEditado,
+      unidadeIdEditada,
+      emailEditado,
+      ehGestorEditado
+    );
     setSubmitting(false);
     if (result.error) {
       toast.error(result.error);
@@ -69,6 +79,7 @@ export function EditarFuncionarioDialog({
           setNomeEditado(nome);
           setEmailEditado(email ?? "");
           setUnidadeIdEditada(unidadeId ?? "");
+          setEhGestorEditado(ehGestor);
           setOpen(true);
         }}
       >
@@ -119,6 +130,10 @@ export function EditarFuncionarioDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-xs text-muted-foreground">É gestor/diretor?</Label>
+              <Switch checked={ehGestorEditado} onCheckedChange={setEhGestorEditado} />
             </div>
             <DialogFooter>
               <Button type="submit" disabled={submitting}>

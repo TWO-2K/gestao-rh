@@ -2,6 +2,46 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { TipoNotificacao } from "@/lib/constants";
+
+async function exigirAdmin() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Não autenticado" } as const;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("papel")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.papel !== "admin" && profile?.papel !== "diretoria") {
+    return { error: "Sem permissão" } as const;
+  }
+  return { error: null, userId: user.id } as const;
+}
+
+export async function alterarTipoNotificacaoAtivo(tipo: TipoNotificacao, ativo: boolean) {
+  const guard = await exigirAdmin();
+  if (guard.error) return guard;
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("notificacao_tipo_config").upsert(
+    {
+      tipo,
+      ativo,
+      atualizado_por: guard.userId,
+      atualizado_em: new Date().toISOString(),
+    },
+    { onConflict: "tipo" }
+  );
+
+  if (error) return { error: error.message };
+  revalidatePath("/configuracoes");
+  return { error: null };
+}
 
 export async function marcarComoLida(id: string) {
   const supabase = await createClient();

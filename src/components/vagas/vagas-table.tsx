@@ -20,11 +20,17 @@ import {
 } from "@/lib/constants";
 import { VagaSheet } from "./vaga-sheet";
 import { SolicitarVagaSheet } from "./solicitar-vaga-sheet";
-import { AlertaExperiencia, periodoExperienciaAtivo } from "./alerta-experiencia";
+import { AlertaExperiencia, AvisoAdmissaoFaltante, periodoExperienciaAtivo } from "./alerta-experiencia";
 import type { Database } from "@/types/database";
 
 type VagaDetalhada = Database["public"]["Views"]["vagas_detalhada"]["Row"];
 type Opcao = { id: string; nome: string };
+type FuncionarioOpcao = {
+  id: string;
+  nome: string;
+  unidade_id: string | null;
+  eh_gestor: boolean;
+};
 type Mode = "view" | "edit";
 
 function formatarData(data: string | null) {
@@ -47,7 +53,7 @@ export function VagasTable({
   unidades: Opcao[];
   cargos: Opcao[];
   setores: Opcao[];
-  funcionarios: Opcao[];
+  funcionarios: FuncionarioOpcao[];
   cargoSetorMap: Record<string, string[]>;
   somenteLeitura?: boolean;
   isGestor?: boolean;
@@ -139,8 +145,12 @@ export function VagasTable({
               {!isGestor && (
                 <>
                   <TableCell>
-                    {vaga.situacao !== "cancelado" && (
-                      <AlertaExperiencia {...periodoExperienciaAtivo(vaga)} />
+                    {vaga.situacao === "fechado" && !vaga.data_admissao ? (
+                      <AvisoAdmissaoFaltante />
+                    ) : (
+                      vaga.situacao !== "cancelado" && (
+                        <AlertaExperiencia {...periodoExperienciaAtivo(vaga)} />
+                      )
                     )}
                   </TableCell>
                   <TableCell>{vaga.candidato_aprovado ?? "—"}</TableCell>

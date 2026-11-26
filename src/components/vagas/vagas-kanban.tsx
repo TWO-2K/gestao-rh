@@ -12,10 +12,17 @@ import {
 } from "@/lib/constants";
 import { VagaRowActions } from "./vaga-row-actions";
 import { VagaSheet } from "./vaga-sheet";
+import { AlertaExperiencia, AvisoAdmissaoFaltante, periodoExperienciaAtivo } from "./alerta-experiencia";
 import type { Database, SituacaoVaga } from "@/types/database";
 
 type VagaDetalhada = Database["public"]["Views"]["vagas_detalhada"]["Row"];
 type Opcao = { id: string; nome: string };
+type FuncionarioOpcao = {
+  id: string;
+  nome: string;
+  unidade_id: string | null;
+  eh_gestor: boolean;
+};
 type Mode = "view" | "edit";
 
 const COLUNAS: { situacao: SituacaoVaga; titulo: string }[] = [
@@ -55,7 +62,7 @@ export function VagasKanban({
   unidades: Opcao[];
   cargos: Opcao[];
   setores: Opcao[];
-  funcionarios: Opcao[];
+  funcionarios: FuncionarioOpcao[];
   cargoSetorMap: Record<string, string[]>;
   isAdmin?: boolean;
   somenteLeitura?: boolean;
@@ -132,6 +139,16 @@ export function VagasKanban({
                         <p className="truncate text-xs">
                           Contratado(a): <span className="font-medium">{vaga.candidato_aprovado}</span>
                         </p>
+                      )}
+                      {vaga.situacao === "fechado" && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Experiência:</span>
+                          {vaga.data_admissao ? (
+                            <AlertaExperiencia {...periodoExperienciaAtivo(vaga)} />
+                          ) : (
+                            <AvisoAdmissaoFaltante />
+                          )}
+                        </div>
                       )}
                       {vaga.situacao === "cancelado" && vaga.observacoes && (
                         <p className="truncate text-xs text-muted-foreground">{vaga.observacoes}</p>

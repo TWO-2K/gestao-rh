@@ -13,6 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
@@ -51,14 +53,45 @@ export function VagaRowActions({
   const [motivoAcao, setMotivoAcao] = useState<MotivoAcao | null>(null);
   const [motivoTexto, setMotivoTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [fecharDialogAberto, setFecharDialogAberto] = useState(false);
+  const [candidatoAprovado, setCandidatoAprovado] = useState("");
+  const [dataAdmissao, setDataAdmissao] = useState("");
+  const [dataFechamento, setDataFechamento] = useState(() =>
+    new Date().toISOString().slice(0, 10)
+  );
 
-  async function alterar(situacaoNova: "em_aberto" | "fechado") {
+  async function alterar(situacaoNova: "em_aberto") {
     const result = await alterarSituacaoVaga(vagaId, situacaoNova);
     if (result.error) {
       toast.error(result.error);
       return;
     }
     toast.success("Situação da vaga atualizada");
+    router.refresh();
+  }
+
+  function abrirFecharDialog() {
+    setCandidatoAprovado("");
+    setDataAdmissao("");
+    setDataFechamento(new Date().toISOString().slice(0, 10));
+    setFecharDialogAberto(true);
+  }
+
+  async function confirmarFechamento() {
+    setEnviando(true);
+    const result = await alterarSituacaoVaga(vagaId, "fechado", {
+      data_fechamento: dataFechamento,
+      data_admissao: dataAdmissao,
+      candidato_aprovado: candidatoAprovado,
+    });
+    setEnviando(false);
+
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Vaga fechada");
+    setFecharDialogAberto(false);
     router.refresh();
   }
 
@@ -106,6 +139,56 @@ export function VagaRowActions({
     setMotivoAcao(null);
     router.refresh();
   }
+
+  const fecharDialog = (
+    <Dialog open={fecharDialogAberto} onOpenChange={setFecharDialogAberto}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Fechar vaga</DialogTitle>
+          <DialogDescription>
+            Informe quem foi admitido para calcular o acompanhamento do período de experiência.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs text-muted-foreground">Candidato(a) aprovado(a)</Label>
+            <Input
+              autoFocus
+              value={candidatoAprovado}
+              onChange={(e) => setCandidatoAprovado(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs text-muted-foreground">Data de fechamento</Label>
+            <Input
+              type="date"
+              value={dataFechamento}
+              onChange={(e) => setDataFechamento(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs text-muted-foreground">Data de admissão</Label>
+            <Input
+              type="date"
+              value={dataAdmissao}
+              onChange={(e) => setDataAdmissao(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setFecharDialogAberto(false)}>
+            Voltar
+          </Button>
+          <Button
+            disabled={!candidatoAprovado.trim() || !dataAdmissao || enviando}
+            onClick={confirmarFechamento}
+          >
+            Confirmar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   const motivoDialog = (
     <Dialog
@@ -184,7 +267,7 @@ export function VagaRowActions({
           {situacao !== "fechado" ? (
             <Button
               size="sm"
-              onClick={() => alterar("fechado")}
+              onClick={abrirFecharDialog}
               className="bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
             >
               <CheckCircle2 className="size-3.5" />
@@ -226,6 +309,7 @@ export function VagaRowActions({
           )}
         </div>
         {motivoDialog}
+        {fecharDialog}
       </>
     );
   }
@@ -242,9 +326,7 @@ export function VagaRowActions({
         />
         <DropdownMenuContent align="end">
           {situacao !== "fechado" && (
-            <DropdownMenuItem onClick={() => alterar("fechado")}>
-              Marcar como fechada
-            </DropdownMenuItem>
+            <DropdownMenuItem onClick={abrirFecharDialog}>Marcar como fechada</DropdownMenuItem>
           )}
           {situacao !== "em_aberto" && (
             <DropdownMenuItem onClick={() => alterar("em_aberto")}>
@@ -263,6 +345,7 @@ export function VagaRowActions({
         </DropdownMenuContent>
       </DropdownMenu>
       {motivoDialog}
+      {fecharDialog}
     </>
   );
 }

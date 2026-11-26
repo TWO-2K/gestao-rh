@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, LayoutDashboard, Settings, Users } from "lucide-react";
+import { Briefcase, FolderCog, LayoutDashboard, Settings, Users } from "lucide-react";
 import { MARCA } from "@/lib/constants";
 import {
   Sidebar,
@@ -32,10 +32,11 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/vagas", label: "Vagas", icon: Briefcase },
   { href: "/dashboard", label: "Painel de Gestão", icon: LayoutDashboard, hideFromGestor: true },
-  { href: "/cadastros", label: "Cadastros", icon: Settings, adminOnly: true, hideFromGestor: true },
+  { href: "/vagas", label: "Vagas", icon: Briefcase },
+  { href: "/cadastros", label: "Cadastros", icon: FolderCog, adminOnly: true, hideFromGestor: true },
   { href: "/usuarios", label: "Usuários", icon: Users, adminOnly: true, hideFromGestor: true },
+  { href: "/configuracoes", label: "Configurações", icon: Settings, adminOnly: true, hideFromGestor: true },
 ];
 
 type Notificacao = Pick<
@@ -48,11 +49,13 @@ export function AppSidebar({
   papel,
   notificacoes,
   contagemNaoLida,
+  logoUrl,
 }: {
   nome: string;
   papel: string;
   notificacoes: Notificacao[];
   contagemNaoLida: number;
+  logoUrl: string;
 }) {
   const pathname = usePathname();
   const isGestor = papel === "gestor";
@@ -62,10 +65,11 @@ export function AppSidebar({
       <SidebarHeader className="px-3 py-4">
         <div className="flex items-center gap-2">
           <Image
-            src={MARCA.logoSupermercado}
+            src={logoUrl}
             alt={MARCA.nome}
             width={32}
             height={32}
+            unoptimized
             className="h-8 w-8 shrink-0 object-contain"
           />
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">

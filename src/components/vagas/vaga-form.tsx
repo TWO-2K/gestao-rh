@@ -21,6 +21,12 @@ import {
 } from "@/components/ui/select";
 
 type Opcao = { id: string; nome: string };
+type FuncionarioOpcao = {
+  id: string;
+  nome: string;
+  unidade_id: string | null;
+  eh_gestor: boolean;
+};
 
 function Secao({
   titulo,
@@ -69,7 +75,7 @@ export function VagaForm({
   unidades: Opcao[];
   cargos: Opcao[];
   setores: Opcao[];
-  funcionarios: Opcao[];
+  funcionarios: FuncionarioOpcao[];
   cargoSetorMap: Record<string, string[]>;
   vagaId?: string;
   defaultValues?: Partial<VagaFormValues>;
@@ -154,11 +160,18 @@ export function VagaForm({
   }, [draftKey, watch]);
 
   const cargoId = watch("cargo_id");
+  const unidadeId = watch("unidade_id");
 
   const setoresSugeridos = useMemo(() => {
     const ids = cargoSetorMap[cargoId] ?? [];
     return setores.filter((s) => ids.includes(s.id));
   }, [cargoId, cargoSetorMap, setores]);
+
+  const funcionariosDaUnidade = useMemo(() => {
+    const gestores = funcionarios.filter((f) => f.eh_gestor);
+    if (!unidadeId) return gestores;
+    return gestores.filter((f) => f.unidade_id === unidadeId);
+  }, [funcionarios, unidadeId]);
 
   function handleCargoChange(id: string | null) {
     if (!id) return;
@@ -336,7 +349,7 @@ export function VagaForm({
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {funcionarios.map((f) => (
+                    {funcionariosDaUnidade.map((f) => (
                       <SelectItem key={f.id} value={f.id}>
                         {f.nome}
                       </SelectItem>
@@ -389,6 +402,9 @@ export function VagaForm({
           <div className="flex flex-col gap-2 sm:col-span-2">
             <Label htmlFor="candidato_aprovado">Candidato(a) aprovado(a)</Label>
             <Input id="candidato_aprovado" {...register("candidato_aprovado")} />
+            {errors.candidato_aprovado && (
+              <p className="text-sm text-destructive">{errors.candidato_aprovado.message}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">

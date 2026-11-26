@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/data/profile";
 import { getMinhasNotificacoes, getContagemNaoLidas } from "@/lib/data/notificacoes";
+import { getLogoUrl } from "@/lib/data/config";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -12,9 +13,10 @@ export default async function AppLayout({
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
 
-  const [notificacoes, contagemNaoLida] = await Promise.all([
+  const [notificacoes, contagemNaoLida, logoUrl] = await Promise.all([
     getMinhasNotificacoes(),
     getContagemNaoLidas(),
+    getLogoUrl(),
   ]);
 
   return (
@@ -24,6 +26,7 @@ export default async function AppLayout({
         papel={profile.papel}
         notificacoes={notificacoes}
         contagemNaoLida={contagemNaoLida}
+        logoUrl={logoUrl}
       />
       <SidebarInset>
         <SidebarTrigger className="m-2 -mb-1 self-start md:hidden" />

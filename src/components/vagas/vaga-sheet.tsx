@@ -52,18 +52,25 @@ import {
 } from "@/lib/constants";
 import { VagaForm } from "./vaga-form";
 import { VagaRowActions } from "./vaga-row-actions";
-import { AlertaExperiencia } from "./alerta-experiencia";
+import { AlertaExperiencia, AvisoAdmissaoFaltante } from "./alerta-experiencia";
 import { atualizarStatusExperiencia, getHistoricoVaga } from "@/lib/actions/vagas";
 import type { VagaFormValues } from "@/lib/validators/vaga";
 import type { Database } from "@/types/database";
 
 type VagaDetalhada = Database["public"]["Views"]["vagas_detalhada"]["Row"];
 type Opcao = { id: string; nome: string };
+type FuncionarioOpcao = {
+  id: string;
+  nome: string;
+  unidade_id: string | null;
+  eh_gestor: boolean;
+};
 type Mode = "view" | "edit" | "create";
 type HistoricoItem = {
   id: string;
   situacao_anterior: string | null;
   situacao_nova: string;
+  tipo_evento: "situacao" | "suspensao" | "edicao";
   alterado_em: string;
   observacao: string | null;
   profiles: { nome: string } | null;
@@ -196,7 +203,7 @@ export function VagaSheet({
   unidades: Opcao[];
   cargos: Opcao[];
   setores: Opcao[];
-  funcionarios: Opcao[];
+  funcionarios: FuncionarioOpcao[];
   cargoSetorMap: Record<string, string[]>;
   vaga?: VagaDetalhada | null;
   mode?: Mode;
@@ -403,7 +410,12 @@ export function VagaSheet({
                       {formatarData(vaga.data_fechamento)}
                     </Campo>
                     <Campo label="Data de admissão" icon={Calendar}>
-                      {formatarData(vaga.data_admissao)}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {formatarData(vaga.data_admissao)}
+                        {vaga.situacao === "fechado" && !vaga.data_admissao && (
+                          <AvisoAdmissaoFaltante />
+                        )}
+                      </div>
                     </Campo>
                     <Campo label="1º período de experiência" icon={CalendarCheck2}>
                       <div className="flex flex-wrap items-center gap-2">
@@ -479,12 +491,22 @@ export function VagaSheet({
                           const isUltimo = index === historico.length - 1;
                           const dotClassName = cn(
                             "mt-1 size-2.5 shrink-0 rounded-full border-2 border-background",
-                            item.situacao_nova === "cancelado"
-                              ? "bg-red-600 dark:bg-red-500"
-                              : item.situacao_nova === "fechado"
-                                ? "bg-slate-500 dark:bg-slate-600"
-                                : "bg-emerald-600 dark:bg-emerald-500"
+                            item.tipo_evento === "suspensao"
+                              ? "bg-amber-500 dark:bg-amber-500"
+                              : item.tipo_evento === "edicao"
+                                ? "bg-blue-500 dark:bg-blue-500"
+                                : item.situacao_nova === "cancelado"
+                                  ? "bg-red-600 dark:bg-red-500"
+                                  : item.situacao_nova === "fechado"
+                                    ? "bg-slate-500 dark:bg-slate-600"
+                                    : "bg-emerald-600 dark:bg-emerald-500"
                           );
+                          const titulo =
+                            item.tipo_evento === "suspensao" || item.tipo_evento === "edicao"
+                              ? item.observacao ?? "Vaga atualizada"
+                              : item.situacao_anterior
+                                ? `${SITUACAO_VAGA_LABEL[item.situacao_anterior as keyof typeof SITUACAO_VAGA_LABEL]} → ${SITUACAO_VAGA_LABEL[item.situacao_nova as keyof typeof SITUACAO_VAGA_LABEL]}`
+                                : `Vaga criada (${SITUACAO_VAGA_LABEL[item.situacao_nova as keyof typeof SITUACAO_VAGA_LABEL]})`;
                           return (
                             <div key={item.id} className="relative flex gap-3 pb-5 last:pb-0">
                               {!isUltimo && (
@@ -492,11 +514,10 @@ export function VagaSheet({
                               )}
                               <div className={dotClassName} />
                               <div className="flex flex-col gap-0.5">
-                                <p className="text-sm font-medium">
-                                  {item.situacao_anterior
-                                    ? `${SITUACAO_VAGA_LABEL[item.situacao_anterior]} → ${SITUACAO_VAGA_LABEL[item.situacao_nova]}`
-                                    : `Vaga criada (${SITUACAO_VAGA_LABEL[item.situacao_nova]})`}
-                                </p>
+                                <p className="text-sm font-medium">{titulo}</p>
+                                {item.tipo_evento === "situacao" && item.observacao && (
+                                  <p className="text-xs text-muted-foreground">{item.observacao}</p>
+                                )}
                                 <p className="text-xs text-muted-foreground">
                                   {formatarDataHora(item.alterado_em)}
                                   {item.profiles?.nome ? ` · ${item.profiles.nome}` : ""}

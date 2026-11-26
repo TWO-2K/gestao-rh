@@ -1,4 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
+import { TIPO_NOTIFICACAO_LABEL, type TipoNotificacao } from "@/lib/constants";
+
+export async function getConfigTiposNotificacao() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("notificacao_tipo_config").select("tipo, ativo");
+  if (error) throw error;
+
+  const ativoPorTipo = new Map(data?.map((row) => [row.tipo, row.ativo]));
+
+  return (Object.keys(TIPO_NOTIFICACAO_LABEL) as TipoNotificacao[])
+    .filter((tipo) => tipo !== "teste")
+    .map((tipo) => ({
+      tipo,
+      label: TIPO_NOTIFICACAO_LABEL[tipo],
+      ativo: ativoPorTipo.get(tipo) ?? true,
+    }));
+}
 
 export async function getMinhasNotificacoes(filtro: { lida?: boolean } = {}, limit = 50) {
   const supabase = await createClient();

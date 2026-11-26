@@ -19,6 +19,37 @@ function emptyToNull(value: string | undefined) {
   return value && value.trim() !== "" ? value : null;
 }
 
+async function notificarGestorVagaFechada(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  vagaAnterior: { gestor_id: string | null; numero: number; cargos: { nome: string } | null },
+  vagaId: string,
+  candidatoAprovado: string | null
+) {
+  if (!vagaAnterior.gestor_id) return;
+
+  const { data: gestorProfile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("funcionario_id", vagaAnterior.gestor_id)
+    .maybeSingle();
+
+  if (!gestorProfile) return;
+
+  const cargoNome = vagaAnterior.cargos?.nome ?? "vaga";
+  const titulo = "Vaga fechada com sucesso";
+  const mensagem = `A vaga de ${cargoNome} (nº ${vagaAnterior.numero}) que você solicitou foi fechada${
+    candidatoAprovado ? ` com a admissão de ${candidatoAprovado}` : ""
+  }.`;
+  await supabase.rpc("fn_criar_notificacao", {
+    p_destinatario_id: gestorProfile.id,
+    p_tipo: "vaga_fechada",
+    p_titulo: titulo,
+    p_mensagem: mensagem,
+    p_vaga_id: vagaId,
+  });
+  await enviarPush(gestorProfile.id, { titulo, mensagem, url: "/notificacoes" });
+}
+
 async function exigirAdmin() {
   const supabase = await createClient();
   const {
@@ -229,28 +260,12 @@ export async function atualizarVaga(id: string, values: VagaFormValues) {
   if (error) return { error: error.message };
 
   if (situacao === "fechado" && vagaAnterior?.situacao !== "fechado" && vagaAnterior?.gestor_id) {
-    const { data: gestorProfile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("funcionario_id", vagaAnterior.gestor_id)
-      .maybeSingle();
-
-    if (gestorProfile) {
-      const cargoNome = vagaAnterior.cargos?.nome ?? "vaga";
-      const candidato = emptyToNull(data.candidato_aprovado);
-      const titulo = "Vaga fechada com sucesso";
-      const mensagem = `A vaga de ${cargoNome} (nº ${vagaAnterior.numero}) que você solicitou foi fechada${
-        candidato ? ` com a admissão de ${candidato}` : ""
-      }.`;
-      await supabase.rpc("fn_criar_notificacao", {
-        p_destinatario_id: gestorProfile.id,
-        p_tipo: "vaga_fechada",
-        p_titulo: titulo,
-        p_mensagem: mensagem,
-        p_vaga_id: id,
-      });
-      await enviarPush(gestorProfile.id, { titulo, mensagem, url: "/notificacoes" });
-    }
+    await notificarGestorVagaFechada(
+      supabase,
+      vagaAnterior,
+      id,
+      emptyToNull(data.candidato_aprovado)
+    );
   }
 
   revalidatePath("/vagas");
@@ -260,9 +275,28 @@ export async function atualizarVaga(id: string, values: VagaFormValues) {
 export async function alterarSituacaoVaga(
   id: string,
   situacao: "em_aberto" | "fechado" | "cancelado",
-  extra?: { motivo_suspensao?: string; data_cancelamento?: string }
+  extra?: {
+    motivo_suspensao?: string;
+    data_cancelamento?: string;
+    data_fechamento?: string;
+    data_admissao?: string;
+    candidato_aprovado?: string;
+  }
 ) {
+  if (situacao === "fechado" && (!extra?.data_admissao || !extra?.candidato_aprovado?.trim())) {
+    return {
+      error: "Informe a data de admissão e o(a) candidato(a) aprovado(a) para fechar a vaga",
+    };
+  }
+
   const supabase = await createClient();
+
+  const { data: vagaAnterior } = await supabase
+    .from("vagas")
+    .select("situacao, gestor_id, numero, cargos(nome)")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("vagas")
     .update({
@@ -270,10 +304,27 @@ export async function alterarSituacaoVaga(
       ...(situacao === "cancelado"
         ? { data_cancelamento: extra?.data_cancelamento ?? new Date().toISOString().slice(0, 10) }
         : {}),
+      ...(situacao === "fechado"
+        ? {
+            data_fechamento: extra?.data_fechamento || new Date().toISOString().slice(0, 10),
+            data_admissao: extra?.data_admissao,
+            candidato_aprovado: extra?.candidato_aprovado?.trim(),
+          }
+        : {}),
     })
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  if (situacao === "fechado" && vagaAnterior?.situacao !== "fechado" && vagaAnterior?.gestor_id) {
+    await notificarGestorVagaFechada(
+      supabase,
+      vagaAnterior,
+      id,
+      extra?.candidato_aprovado?.trim() || null
+    );
+  }
+
   revalidatePath("/vagas");
   return { error: null };
 }
@@ -430,7 +481,7 @@ export async function getHistoricoVaga(vagaId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("historico_status")
-    .select("id, situacao_anterior, situacao_nova, alterado_em, observacao, profiles(nome)")
+    .select("id, situacao_anterior, situacao_nova, tipo_evento, alterado_em, observacao, profiles(nome)")
     .eq("vaga_id", vagaId)
     .order("alterado_em", { ascending: false });
 

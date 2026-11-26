@@ -23,6 +23,36 @@ export type Database = {
   };
   public: {
     Tables: {
+      app_config: {
+        Row: {
+          id: boolean;
+          logo_atualizado_em: string | null;
+          logo_atualizado_por: string | null;
+          logo_path: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          id?: boolean;
+          logo_atualizado_em?: string | null;
+          logo_atualizado_por?: string | null;
+          logo_path?: string | null;
+        };
+        Update: {
+          id?: boolean;
+          logo_atualizado_em?: string | null;
+          logo_atualizado_por?: string | null;
+          logo_path?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "app_config_logo_atualizado_por_fkey";
+            columns: ["logo_atualizado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       cargo_setor: {
         Row: {
           cargo_id: string;
@@ -78,6 +108,7 @@ export type Database = {
           assinatura_path: string | null;
           ativo: boolean;
           created_at: string;
+          eh_gestor: boolean;
           email: string | null;
           id: string;
           nome: string;
@@ -88,6 +119,7 @@ export type Database = {
           assinatura_path?: string | null;
           ativo?: boolean;
           created_at?: string;
+          eh_gestor?: boolean;
           email?: string | null;
           id?: string;
           nome: string;
@@ -97,6 +129,7 @@ export type Database = {
           assinatura_path?: string | null;
           ativo?: boolean;
           created_at?: string;
+          eh_gestor?: boolean;
           email?: string | null;
           id?: string;
           nome?: string;
@@ -120,6 +153,7 @@ export type Database = {
           observacao: string | null;
           situacao_anterior: Database["public"]["Enums"]["situacao_vaga"] | null;
           situacao_nova: Database["public"]["Enums"]["situacao_vaga"];
+          tipo_evento: string;
           vaga_id: string;
         };
         ComputedFields: never;
@@ -130,6 +164,7 @@ export type Database = {
           observacao?: string | null;
           situacao_anterior?: Database["public"]["Enums"]["situacao_vaga"] | null;
           situacao_nova: Database["public"]["Enums"]["situacao_vaga"];
+          tipo_evento?: string;
           vaga_id: string;
         };
         Update: {
@@ -139,6 +174,7 @@ export type Database = {
           observacao?: string | null;
           situacao_anterior?: Database["public"]["Enums"]["situacao_vaga"] | null;
           situacao_nova?: Database["public"]["Enums"]["situacao_vaga"];
+          tipo_evento?: string;
           vaga_id?: string;
         };
         Relationships: [
@@ -161,6 +197,36 @@ export type Database = {
             columns: ["vaga_id"];
             isOneToOne: false;
             referencedRelation: "vagas_detalhada";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notificacao_tipo_config: {
+        Row: {
+          ativo: boolean;
+          atualizado_em: string;
+          atualizado_por: string | null;
+          tipo: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          tipo: string;
+        };
+        Update: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notificacao_tipo_config_atualizado_por_fkey";
+            columns: ["atualizado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -220,45 +286,6 @@ export type Database = {
             columns: ["vaga_id"];
             isOneToOne: false;
             referencedRelation: "vagas_detalhada";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      push_subscriptions: {
-        Row: {
-          auth: string;
-          created_at: string;
-          endpoint: string;
-          id: string;
-          p256dh: string;
-          profile_id: string;
-          user_agent: string | null;
-        };
-        ComputedFields: never;
-        Insert: {
-          auth: string;
-          created_at?: string;
-          endpoint: string;
-          id?: string;
-          p256dh: string;
-          profile_id: string;
-          user_agent?: string | null;
-        };
-        Update: {
-          auth?: string;
-          created_at?: string;
-          endpoint?: string;
-          id?: string;
-          p256dh?: string;
-          profile_id?: string;
-          user_agent?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "push_subscriptions_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -323,6 +350,45 @@ export type Database = {
             columns: ["funcionario_id"];
             isOneToOne: false;
             referencedRelation: "funcionarios";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          created_at: string;
+          endpoint: string;
+          id: string;
+          p256dh: string;
+          profile_id: string;
+          user_agent: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          auth: string;
+          created_at?: string;
+          endpoint: string;
+          id?: string;
+          p256dh: string;
+          profile_id: string;
+          user_agent?: string | null;
+        };
+        Update: {
+          auth?: string;
+          created_at?: string;
+          endpoint?: string;
+          id?: string;
+          p256dh?: string;
+          profile_id?: string;
+          user_agent?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -610,6 +676,9 @@ export type Database = {
         Returns: undefined;
       };
       fn_remover_minha_assinatura: { Args: Record<PropertyKey, never>; Returns: string };
+      fn_verificar_sla_atrasado: { Args: Record<PropertyKey, never>; Returns: undefined };
+      fn_verificar_sla_vencendo: { Args: Record<PropertyKey, never>; Returns: undefined };
+      fn_verificar_vencimento_experiencia: { Args: Record<PropertyKey, never>; Returns: undefined };
     };
     Enums: {
       motivo_vaga: "substituicao" | "aumento_de_quadro";
@@ -740,10 +809,10 @@ export const Constants = {
       status_experiencia: ["pendente", "aprovado", "reprovado"],
     },
   },
-} as const
+} as const;
 
-export type PapelUsuario = (typeof Constants.public.Enums.papel_usuario)[number]
-export type MotivoVaga = (typeof Constants.public.Enums.motivo_vaga)[number]
-export type SituacaoVaga = (typeof Constants.public.Enums.situacao_vaga)[number]
-export type StatusExperiencia = (typeof Constants.public.Enums.status_experiencia)[number]
-export type StatusSla = "no_prazo" | "em_atraso" | "suspenso"
+export type PapelUsuario = (typeof Constants.public.Enums.papel_usuario)[number];
+export type MotivoVaga = (typeof Constants.public.Enums.motivo_vaga)[number];
+export type SituacaoVaga = (typeof Constants.public.Enums.situacao_vaga)[number];
+export type StatusExperiencia = (typeof Constants.public.Enums.status_experiencia)[number];
+export type StatusSla = "no_prazo" | "em_atraso" | "suspenso";

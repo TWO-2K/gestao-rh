@@ -60,7 +60,7 @@ export async function getFuncionarios() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("funcionarios")
-    .select("id, nome, email")
+    .select("id, nome, email, unidade_id, eh_gestor")
     .eq("ativo", true)
     .order("nome");
   return data ?? [];
@@ -74,7 +74,7 @@ export async function getFuncionariosPaginado(pagina: number, porPagina: number)
   const to = from + porPagina - 1;
   const { data, count, error } = await supabase
     .from("funcionarios")
-    .select("id, nome, email, unidade_id, ativo", { count: "exact" })
+    .select("id, nome, email, unidade_id, ativo, eh_gestor", { count: "exact" })
     .order("nome")
     .range(from, to);
   if (error) throw error;
