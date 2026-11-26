@@ -165,6 +165,104 @@ export type Database = {
           },
         ];
       };
+      notificacoes: {
+        Row: {
+          created_at: string;
+          destinatario_id: string;
+          id: string;
+          lida: boolean;
+          lida_em: string | null;
+          mensagem: string;
+          tipo: string;
+          titulo: string;
+          vaga_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          destinatario_id: string;
+          id?: string;
+          lida?: boolean;
+          lida_em?: string | null;
+          mensagem: string;
+          tipo: string;
+          titulo: string;
+          vaga_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          destinatario_id?: string;
+          id?: string;
+          lida?: boolean;
+          lida_em?: string | null;
+          mensagem?: string;
+          tipo?: string;
+          titulo?: string;
+          vaga_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_destinatario_id_fkey";
+            columns: ["destinatario_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notificacoes_vaga_id_fkey";
+            columns: ["vaga_id"];
+            isOneToOne: false;
+            referencedRelation: "vagas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notificacoes_vaga_id_fkey";
+            columns: ["vaga_id"];
+            isOneToOne: false;
+            referencedRelation: "vagas_detalhada";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          created_at: string;
+          endpoint: string;
+          id: string;
+          p256dh: string;
+          profile_id: string;
+          user_agent: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          auth: string;
+          created_at?: string;
+          endpoint: string;
+          id?: string;
+          p256dh: string;
+          profile_id: string;
+          user_agent?: string | null;
+        };
+        Update: {
+          auth?: string;
+          created_at?: string;
+          endpoint?: string;
+          id?: string;
+          p256dh?: string;
+          profile_id?: string;
+          user_agent?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profile_unidades: {
         Row: {
           profile_id: string;
@@ -484,6 +582,16 @@ export type Database = {
       };
     };
     Functions: {
+      fn_criar_notificacao: {
+        Args: {
+          p_destinatario_id: string;
+          p_mensagem: string;
+          p_tipo: string;
+          p_titulo: string;
+          p_vaga_id?: string;
+        };
+        Returns: string;
+      };
       fn_definir_minha_assinatura: { Args: { p_path: string }; Returns: undefined };
       fn_has_unidade_access: { Args: { p_unidade_id: string }; Returns: boolean };
       fn_is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
@@ -491,6 +599,16 @@ export type Database = {
       fn_is_recrutador: { Args: Record<PropertyKey, never>; Returns: boolean };
       fn_is_super_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       fn_my_funcionario_id: { Args: Record<PropertyKey, never>; Returns: string };
+      fn_notificar_por_papel: {
+        Args: {
+          p_mensagem: string;
+          p_papel: Database["public"]["Enums"]["papel_usuario"];
+          p_tipo: string;
+          p_titulo: string;
+          p_vaga_id?: string;
+        };
+        Returns: undefined;
+      };
       fn_remover_minha_assinatura: { Args: Record<PropertyKey, never>; Returns: string };
     };
     Enums: {

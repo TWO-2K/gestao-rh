@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
+import { NotificacaoBell } from "@/components/layout/notificacao-bell";
 import { Separator } from "@/components/ui/separator";
+import type { Tables } from "@/types/database";
 
 type NavItem = {
   href: string;
@@ -36,7 +38,22 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/usuarios", label: "Usuários", icon: Users, adminOnly: true, hideFromGestor: true },
 ];
 
-export function AppSidebar({ nome, papel }: { nome: string; papel: string }) {
+type Notificacao = Pick<
+  Tables<"notificacoes">,
+  "id" | "tipo" | "titulo" | "mensagem" | "vaga_id" | "lida" | "lida_em" | "created_at"
+>;
+
+export function AppSidebar({
+  nome,
+  papel,
+  notificacoes,
+  contagemNaoLida,
+}: {
+  nome: string;
+  papel: string;
+  notificacoes: Notificacao[];
+  contagemNaoLida: number;
+}) {
   const pathname = usePathname();
   const isGestor = papel === "gestor";
 
@@ -86,7 +103,10 @@ export function AppSidebar({ nome, papel }: { nome: string; papel: string }) {
       <SidebarFooter className="px-3 py-3">
         <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:flex-col">
           <UserMenu nome={nome} papel={papel} />
-          <ModeToggle />
+          <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col">
+            <NotificacaoBell notificacoes={notificacoes} contagemNaoLida={contagemNaoLida} />
+            <ModeToggle />
+          </div>
         </div>
       </SidebarFooter>
       <SidebarRail />

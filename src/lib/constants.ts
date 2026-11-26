@@ -60,3 +60,20 @@ export const PAPEL_BADGE_VARIANT: Record<string, string> = {
   recrutador: "bg-blue-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500",
   gestor: "bg-amber-600 text-white border-amber-600 dark:bg-amber-500 dark:border-amber-500",
 };
+
+// Tipos de notificação válidos no app (a tabela guarda `tipo` como texto livre —
+// novos tipos entram aqui, sem precisar de migration).
+export type TipoNotificacao =
+  | "teste"
+  | "vaga_fechada"
+  | "vaga_rejeitada"
+  | "vaga_aprovada"
+  | "vaga_pendente_aprovacao";
+
+export const TIPO_NOTIFICACAO_LABEL: Record<string, string> = {
+  teste: "Notificação de teste",
+  vaga_fechada: "Vaga fechada",
+  vaga_rejeitada: "Solicitação rejeitada",
+  vaga_aprovada: "Solicitação aprovada",
+  vaga_pendente_aprovacao: "Aguardando aprovação",
+};

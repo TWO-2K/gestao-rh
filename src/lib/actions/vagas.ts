@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getVagasParaExportar, type VagasFiltro } from "@/lib/data/vagas";
+import { enviarPush, enviarPushPorPapel } from "@/lib/push";
 import {
   solicitarVagaSchema,
   vagaFormSchema,
@@ -68,20 +69,51 @@ export async function solicitarVaga(values: SolicitarVagaValues) {
     return { error: "Seu cadastro de funcionário não tem unidade definida. Fale com o RH." };
   }
 
-  const { error } = await supabase.from("vagas").insert({
-    unidade_id: funcionario.unidade_id,
-    cargo_id: data.cargo_id,
-    setor_id: data.setor_id,
-    motivo: data.motivo,
-    horario_trabalho: emptyToNull(data.horario_trabalho),
-    justificativa: emptyToNull(data.justificativa),
-    gestor_id: profile.funcionario_id,
-    data_abertura: new Date().toISOString().slice(0, 10),
-    sla_dias: 20,
-    situacao: data.motivo === "aumento_de_quadro" ? "pendente_aprovacao" : "em_aberto",
-  });
+  const situacao = data.motivo === "aumento_de_quadro" ? "pendente_aprovacao" : "em_aberto";
+
+  const { data: novaVaga, error } = await supabase
+    .from("vagas")
+    .insert({
+      unidade_id: funcionario.unidade_id,
+      cargo_id: data.cargo_id,
+      setor_id: data.setor_id,
+      motivo: data.motivo,
+      horario_trabalho: emptyToNull(data.horario_trabalho),
+      justificativa: emptyToNull(data.justificativa),
+      gestor_id: profile.funcionario_id,
+      data_abertura: new Date().toISOString().slice(0, 10),
+      sla_dias: 20,
+      situacao,
+    })
+    .select("id, numero, cargos(nome)")
+    .single();
 
   if (error) return { error: error.message };
+
+  if (situacao === "pendente_aprovacao" && novaVaga) {
+    const cargoNome = novaVaga.cargos?.nome ?? "vaga";
+    const titulo = "Nova solicitação aguardando aprovação";
+    const mensagem = `Solicitação de aumento de quadro para ${cargoNome} (nº ${novaVaga.numero}) aguarda aprovação da diretoria.`;
+    await supabase.rpc("fn_notificar_por_papel", {
+      p_papel: "admin",
+      p_tipo: "vaga_pendente_aprovacao",
+      p_titulo: titulo,
+      p_mensagem: mensagem,
+      p_vaga_id: novaVaga.id,
+    });
+    await supabase.rpc("fn_notificar_por_papel", {
+      p_papel: "diretoria",
+      p_tipo: "vaga_pendente_aprovacao",
+      p_titulo: titulo,
+      p_mensagem: mensagem,
+      p_vaga_id: novaVaga.id,
+    });
+    await enviarPushPorPapel(["admin", "diretoria"], {
+      titulo,
+      mensagem,
+      url: "/vagas",
+    });
+  }
 
   revalidatePath("/portal-gestor");
   return { error: null };
@@ -167,6 +199,12 @@ export async function atualizarVaga(id: string, values: VagaFormValues) {
 
   const situacao = data.data_fechamento ? "fechado" : undefined;
 
+  const { data: vagaAnterior } = await supabase
+    .from("vagas")
+    .select("situacao, gestor_id, numero, cargos(nome)")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("vagas")
     .update({
@@ -189,6 +227,31 @@ export async function atualizarVaga(id: string, values: VagaFormValues) {
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  if (situacao === "fechado" && vagaAnterior?.situacao !== "fechado" && vagaAnterior?.gestor_id) {
+    const { data: gestorProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("funcionario_id", vagaAnterior.gestor_id)
+      .maybeSingle();
+
+    if (gestorProfile) {
+      const cargoNome = vagaAnterior.cargos?.nome ?? "vaga";
+      const candidato = emptyToNull(data.candidato_aprovado);
+      const titulo = "Vaga fechada com sucesso";
+      const mensagem = `A vaga de ${cargoNome} (nº ${vagaAnterior.numero}) que você solicitou foi fechada${
+        candidato ? ` com a admissão de ${candidato}` : ""
+      }.`;
+      await supabase.rpc("fn_criar_notificacao", {
+        p_destinatario_id: gestorProfile.id,
+        p_tipo: "vaga_fechada",
+        p_titulo: titulo,
+        p_mensagem: mensagem,
+        p_vaga_id: id,
+      });
+      await enviarPush(gestorProfile.id, { titulo, mensagem, url: "/notificacoes" });
+    }
+  }
 
   revalidatePath("/vagas");
   return { error: null };
@@ -220,12 +283,42 @@ export async function aprovarVaga(id: string) {
   if (guard.error) return guard;
 
   const supabase = await createClient();
+  const { data: vaga, error: errVaga } = await supabase
+    .from("vagas")
+    .select("gestor_id, numero, cargos(nome)")
+    .eq("id", id)
+    .single();
+  if (errVaga) return { error: errVaga.message };
+
   const { error } = await supabase
     .from("vagas")
     .update({ situacao: "em_aberto" })
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  if (vaga?.gestor_id) {
+    const { data: gestorProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("funcionario_id", vaga.gestor_id)
+      .maybeSingle();
+
+    if (gestorProfile) {
+      const cargoNome = vaga.cargos?.nome ?? "vaga";
+      const titulo = "Solicitação de vaga aprovada";
+      const mensagem = `A solicitação de ${cargoNome} (nº ${vaga.numero}) foi aprovada pela diretoria e entrou em recrutamento.`;
+      await supabase.rpc("fn_criar_notificacao", {
+        p_destinatario_id: gestorProfile.id,
+        p_tipo: "vaga_aprovada",
+        p_titulo: titulo,
+        p_mensagem: mensagem,
+        p_vaga_id: id,
+      });
+      await enviarPush(gestorProfile.id, { titulo, mensagem, url: "/notificacoes" });
+    }
+  }
+
   revalidatePath("/vagas");
   return { error: null };
 }
@@ -237,12 +330,13 @@ export async function rejeitarVaga(id: string, motivo: string) {
   const supabase = await createClient();
   const { data: vaga, error: errVaga } = await supabase
     .from("vagas")
-    .select("observacoes")
+    .select("observacoes, gestor_id, numero, cargos(nome)")
     .eq("id", id)
     .single();
   if (errVaga) return { error: errVaga.message };
 
-  const rejeicao = `Rejeitado pela diretoria: ${motivo.trim()}`;
+  const motivoTratado = motivo.trim();
+  const rejeicao = `Rejeitado pela diretoria: ${motivoTratado}`;
   const observacoes = vaga?.observacoes ? `${vaga.observacoes}\n${rejeicao}` : rejeicao;
 
   const { error } = await supabase
@@ -255,6 +349,29 @@ export async function rejeitarVaga(id: string, motivo: string) {
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  if (vaga?.gestor_id) {
+    const { data: gestorProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("funcionario_id", vaga.gestor_id)
+      .maybeSingle();
+
+    if (gestorProfile) {
+      const cargoNome = vaga.cargos?.nome ?? "vaga";
+      const titulo = "Solicitação de vaga rejeitada";
+      const mensagem = `A solicitação de ${cargoNome} (nº ${vaga.numero}) foi rejeitada pela diretoria: ${motivoTratado}.`;
+      await supabase.rpc("fn_criar_notificacao", {
+        p_destinatario_id: gestorProfile.id,
+        p_tipo: "vaga_rejeitada",
+        p_titulo: titulo,
+        p_mensagem: mensagem,
+        p_vaga_id: id,
+      });
+      await enviarPush(gestorProfile.id, { titulo, mensagem, url: "/notificacoes" });
+    }
+  }
+
   revalidatePath("/vagas");
   return { error: null };
 }
