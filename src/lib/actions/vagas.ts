@@ -393,7 +393,7 @@ export async function rejeitarVaga(id: string, motivo: string) {
   const { error } = await supabase
     .from("vagas")
     .update({
-      situacao: "cancelado",
+      situacao: "rejeitado",
       observacoes,
       data_cancelamento: new Date().toISOString().slice(0, 10),
     })
@@ -519,6 +519,79 @@ export async function alterarSuspensaoVaga(
     .eq("id", id);
 
   if (error) return { error: error.message };
+  revalidatePath("/vagas");
+  return { error: null };
+}
+
+async function exigirRecrutador() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Não autenticado" } as const;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("papel")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.papel !== "recrutador") {
+    return { error: "Sem permissão" } as const;
+  }
+  return { error: null } as const;
+}
+
+export async function assumirVaga(id: string) {
+  const guard = await exigirRecrutador();
+  if (guard.error) return guard;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Não autenticado" };
+
+  const { data, error } = await supabase
+    .from("vagas")
+    .update({ recrutador_id: user.id })
+    .eq("id", id)
+    .is("recrutador_id", null)
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!data) {
+    return { error: "Esta vaga já foi assumida por outro(a) recrutador(a)." };
+  }
+
+  revalidatePath("/vagas");
+  return { error: null };
+}
+
+export async function liberarVaga(id: string) {
+  const guard = await exigirRecrutador();
+  if (guard.error) return guard;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Não autenticado" };
+
+  const { data, error } = await supabase
+    .from("vagas")
+    .update({ recrutador_id: null })
+    .eq("id", id)
+    .eq("recrutador_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!data) {
+    return { error: "Você não pode liberar uma vaga que não assumiu." };
+  }
+
   revalidatePath("/vagas");
   return { error: null };
 }

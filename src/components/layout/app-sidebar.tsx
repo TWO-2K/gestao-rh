@@ -28,6 +28,7 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   adminOnly?: boolean;
+  somenteAdmin?: boolean;
   hideFromGestor?: boolean;
 };
 
@@ -36,7 +37,13 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/vagas", label: "Vagas", icon: Briefcase },
   { href: "/cadastros", label: "Cadastros", icon: FolderCog, adminOnly: true, hideFromGestor: true },
   { href: "/usuarios", label: "Usuários", icon: Users, adminOnly: true, hideFromGestor: true },
-  { href: "/configuracoes", label: "Configurações", icon: Settings, adminOnly: true, hideFromGestor: true },
+  {
+    href: "/configuracoes",
+    label: "Configurações",
+    icon: Settings,
+    somenteAdmin: true,
+    hideFromGestor: true,
+  },
 ];
 
 type Notificacao = Pick<
@@ -86,6 +93,7 @@ export function AppSidebar({
               {NAV_ITEMS.filter(
                 (item) =>
                   (!item.adminOnly || papel === "admin" || papel === "diretoria") &&
+                  (!item.somenteAdmin || papel === "admin") &&
                   (!isGestor || !item.hideFromGestor)
               ).map((item) => (
                 <SidebarMenuItem key={item.href}>

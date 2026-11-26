@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import type { SituacaoVaga } from "@/types/database";
+import { cn } from "@/lib/utils";
 
 const POR_PAGINA = 20;
 
@@ -63,8 +64,8 @@ export default async function VagasPage({
   const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className={cn("flex flex-col gap-4", ehKanban && "lg:h-full lg:min-h-0")}>
+      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div>
           <h1 className="text-xl font-semibold">{isGestor ? "Minhas solicitações" : "Mapa de Vagas"}</h1>
           <p className="text-sm text-muted-foreground">
@@ -114,19 +115,24 @@ export default async function VagasPage({
         </div>
       </div>
 
-      <VagasFiltros unidades={unidades} setores={setores} somenteLeitura={isGestor} />
+      <div className="shrink-0">
+        <VagasFiltros unidades={unidades} setores={setores} somenteLeitura={isGestor} />
+      </div>
 
       {ehKanban ? (
-        <VagasKanban
-          vagas={vagas}
-          unidades={unidades}
-          cargos={cargos}
-          setores={setores}
-          funcionarios={funcionarios}
-          cargoSetorMap={cargoSetorMap}
-          isAdmin={isAdmin}
-          somenteLeitura={somenteLeitura}
-        />
+        <div className="lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+          <VagasKanban
+            vagas={vagas}
+            unidades={unidades}
+            cargos={cargos}
+            setores={setores}
+            funcionarios={funcionarios}
+            cargoSetorMap={cargoSetorMap}
+            isAdmin={isAdmin}
+            somenteLeitura={somenteLeitura}
+            currentUserId={profile.id}
+          />
+        </div>
       ) : (
         <>
           <VagasTable
@@ -139,6 +145,7 @@ export default async function VagasPage({
             somenteLeitura={somenteLeitura}
             isGestor={isGestor}
             isAdmin={isAdmin}
+            currentUserId={profile.id}
           />
           <PaginationControls paginaAtual={pagina} totalPaginas={totalPaginas} />
         </>

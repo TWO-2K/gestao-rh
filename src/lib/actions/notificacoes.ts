@@ -17,7 +17,7 @@ async function exigirAdmin() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.papel !== "admin" && profile?.papel !== "diretoria") {
+  if (profile?.papel !== "admin") {
     return { error: "Sem permissão" } as const;
   }
   return { error: null, userId: user.id } as const;

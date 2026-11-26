@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, MoreHorizontal, PauseCircle, PlayCircle, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  MoreHorizontal,
+  PauseCircle,
+  PlayCircle,
+  UserCheck,
+  UserX,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +35,9 @@ import {
   alterarSituacaoVaga,
   alterarSuspensaoVaga,
   aprovarVaga,
+  assumirVaga,
   cancelarVaga,
+  liberarVaga,
   rejeitarVaga,
 } from "@/lib/actions/vagas";
 import type { SituacaoVaga } from "@/types/database";
@@ -41,13 +51,19 @@ export function VagaRowActions({
   variant = "menu",
   isAdmin = false,
   somenteLeitura = false,
+  recrutadorId = null,
+  recrutadorNome = null,
+  currentUserId,
 }: {
   vagaId: string;
   situacao: SituacaoVaga;
   suspensa: boolean;
-  variant?: "menu" | "buttons";
+  variant?: "menu" | "buttons" | "card";
   isAdmin?: boolean;
   somenteLeitura?: boolean;
+  recrutadorId?: string | null;
+  recrutadorNome?: string | null;
+  currentUserId?: string;
 }) {
   const router = useRouter();
   const [motivoAcao, setMotivoAcao] = useState<MotivoAcao | null>(null);
@@ -112,6 +128,26 @@ export function VagaRowActions({
       return;
     }
     toast.success("Vaga aprovada e liberada para recrutamento");
+    router.refresh();
+  }
+
+  async function assumir() {
+    const result = await assumirVaga(vagaId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Vaga assumida");
+    router.refresh();
+  }
+
+  async function liberar() {
+    const result = await liberarVaga(vagaId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Vaga liberada");
     router.refresh();
   }
 
@@ -256,6 +292,14 @@ export function VagaRowActions({
     return null;
   }
 
+  if (variant === "card" && somenteLeitura) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Recrutador(a): {recrutadorNome ?? "Ninguém ainda"}
+      </p>
+    );
+  }
+
   if (somenteLeitura) {
     return null;
   }
@@ -297,7 +341,7 @@ export function VagaRowActions({
             {suspensa ? "Reativar" : "Suspender"}
           </Button>
 
-          {situacao !== "cancelado" && (
+          {situacao !== "cancelado" && situacao !== "rejeitado" && (
             <Button
               size="sm"
               onClick={() => abrirMotivoDialog("cancelar")}
@@ -307,6 +351,102 @@ export function VagaRowActions({
               Cancelar
             </Button>
           )}
+
+          {!isAdmin && situacao === "em_aberto" && recrutadorId === null && (
+            <Button size="sm" variant="outline" onClick={assumir}>
+              <UserCheck className="size-3.5" />
+              Assumir vaga
+            </Button>
+          )}
+          {!isAdmin && situacao === "em_aberto" && recrutadorId === currentUserId && (
+            <Button size="sm" variant="outline" onClick={liberar}>
+              <UserX className="size-3.5" />
+              Liberar vaga
+            </Button>
+          )}
+        </div>
+        {motivoDialog}
+        {fecharDialog}
+      </>
+    );
+  }
+
+  if (variant === "card") {
+    const podeAssumir = !isAdmin && situacao === "em_aberto" && recrutadorId === null;
+    const podeLiberar = !isAdmin && situacao === "em_aberto" && recrutadorId === currentUserId;
+
+    return (
+      <>
+        <div className="flex flex-col gap-2">
+          {podeAssumir ? (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto justify-start p-0 text-xs"
+              onClick={assumir}
+            >
+              Assumir vaga →
+            </Button>
+          ) : podeLiberar ? (
+            <p className="text-xs text-muted-foreground">
+              Você está com esta vaga ·{" "}
+              <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={liberar}>
+                Liberar
+              </Button>
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Recrutador(a): {recrutadorNome ?? "Ninguém ainda"}
+            </p>
+          )}
+
+          <div className="flex items-center gap-1.5">
+            {situacao !== "fechado" ? (
+              <Button
+                size="sm"
+                onClick={abrirFecharDialog}
+                className="bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+              >
+                <CheckCircle2 className="size-3.5" />
+                Fechar
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => alterar("em_aberto")}
+                className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                <PlayCircle className="size-3.5" />
+                Reabrir
+              </Button>
+            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="ghost" size="icon-sm">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={alternarSuspensao}>
+                  {suspensa ? "Reativar (remover suspensão)" : "Suspender vaga"}
+                </DropdownMenuItem>
+                {situacao !== "cancelado" && situacao !== "rejeitado" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => abrirMotivoDialog("cancelar")}
+                    >
+                      Cancelar vaga
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         {motivoDialog}
         {fecharDialog}
@@ -319,7 +459,7 @@ export function VagaRowActions({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="icon" className="size-8">
+            <Button variant="ghost" size="icon">
               <MoreHorizontal className="size-4" />
             </Button>
           }
@@ -336,8 +476,14 @@ export function VagaRowActions({
           <DropdownMenuItem onClick={alternarSuspensao}>
             {suspensa ? "Reativar (remover suspensão)" : "Suspender vaga"}
           </DropdownMenuItem>
+          {!isAdmin && situacao === "em_aberto" && recrutadorId === null && (
+            <DropdownMenuItem onClick={assumir}>Assumir vaga</DropdownMenuItem>
+          )}
+          {!isAdmin && situacao === "em_aberto" && recrutadorId === currentUserId && (
+            <DropdownMenuItem onClick={liberar}>Liberar vaga</DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
-          {situacao !== "cancelado" && (
+          {situacao !== "cancelado" && situacao !== "rejeitado" && (
             <DropdownMenuItem variant="destructive" onClick={() => abrirMotivoDialog("cancelar")}>
               Cancelar vaga
             </DropdownMenuItem>

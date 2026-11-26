@@ -30,6 +30,7 @@ const COLUNAS: { situacao: SituacaoVaga; titulo: string }[] = [
   { situacao: "em_aberto", titulo: "Em aberto" },
   { situacao: "fechado", titulo: "Fechado" },
   { situacao: "cancelado", titulo: "Cancelado" },
+  { situacao: "rejeitado", titulo: "Rejeitado" },
 ];
 
 const COLUNA_COR: Record<SituacaoVaga, string> = {
@@ -37,6 +38,7 @@ const COLUNA_COR: Record<SituacaoVaga, string> = {
   em_aberto: "bg-emerald-600",
   fechado: "bg-slate-500",
   cancelado: "bg-red-600",
+  rejeitado: "bg-rose-800",
 };
 
 function formatarData(data: string | null) {
@@ -57,6 +59,7 @@ export function VagasKanban({
   cargoSetorMap,
   isAdmin = false,
   somenteLeitura = false,
+  currentUserId,
 }: {
   vagas: VagaDetalhada[];
   unidades: Opcao[];
@@ -66,6 +69,7 @@ export function VagasKanban({
   cargoSetorMap: Record<string, string[]>;
   isAdmin?: boolean;
   somenteLeitura?: boolean;
+  currentUserId?: string;
 }) {
   const [vagaSelecionada, setVagaSelecionada] = useState<VagaDetalhada | null>(null);
   const [modo, setModo] = useState<Mode>("view");
@@ -78,17 +82,20 @@ export function VagasKanban({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 lg:h-full lg:grid-cols-5">
       {COLUNAS.map((coluna) => {
-        const fechadaOuCancelada = coluna.situacao === "fechado" || coluna.situacao === "cancelado";
+        const fechadaOuCancelada =
+          coluna.situacao === "fechado" ||
+          coluna.situacao === "cancelado" ||
+          coluna.situacao === "rejeitado";
         const vagasDaColuna = vagas
           .filter((v) => v.situacao === coluna.situacao)
           .sort((a, b) =>
             fechadaOuCancelada ? dataReferencia(b).localeCompare(dataReferencia(a)) : 0,
           );
         return (
-          <div key={coluna.situacao} className="flex flex-col gap-3">
-            <div className="flex flex-col gap-2">
+          <div key={coluna.situacao} className="flex flex-col gap-3 lg:h-full lg:min-h-0">
+            <div className="flex flex-col gap-2 shrink-0">
               <div className={cn("h-1.5 w-full rounded-full", COLUNA_COR[coluna.situacao])} />
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
@@ -99,7 +106,7 @@ export function VagasKanban({
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="scrollbar-hidden flex flex-col gap-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
               {vagasDaColuna.length === 0 && (
                 <div className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground">
                   Nenhuma vaga
@@ -110,7 +117,7 @@ export function VagasKanban({
                 fechadaOuCancelada ? (
                   <Card
                     key={vaga.id}
-                    className="cursor-pointer gap-2 py-3"
+                    className="shrink-0 cursor-pointer gap-2 py-3"
                     onClick={() => abrir(vaga)}
                   >
                     <CardContent className="flex flex-col gap-1.5 px-4">
@@ -127,6 +134,11 @@ export function VagasKanban({
                           <Badge className="w-fit shrink-0 gap-1 bg-emerald-600 text-white dark:bg-emerald-600">
                             <CheckCircle2 className="size-3.5" />
                             Fechada
+                          </Badge>
+                        ) : vaga.situacao === "rejeitado" ? (
+                          <Badge className="w-fit shrink-0 gap-1 bg-rose-800 text-white dark:bg-rose-800">
+                            <XCircle className="size-3.5" />
+                            Rejeitada
                           </Badge>
                         ) : (
                           <Badge className="w-fit shrink-0 gap-1 bg-red-600 text-white dark:bg-red-600">
@@ -150,15 +162,16 @@ export function VagasKanban({
                           )}
                         </div>
                       )}
-                      {vaga.situacao === "cancelado" && vaga.observacoes && (
-                        <p className="truncate text-xs text-muted-foreground">{vaga.observacoes}</p>
-                      )}
+                      {(vaga.situacao === "cancelado" || vaga.situacao === "rejeitado") &&
+                        vaga.observacoes && (
+                          <p className="truncate text-xs text-muted-foreground">{vaga.observacoes}</p>
+                        )}
                     </CardContent>
                   </Card>
                 ) : (
                   <Card
                     key={vaga.id}
-                    className="cursor-pointer gap-3 py-4"
+                    className="shrink-0 cursor-pointer gap-3 py-4"
                     onClick={() => abrir(vaga)}
                   >
                     <CardHeader className="px-4">
@@ -199,9 +212,12 @@ export function VagasKanban({
                           vagaId={vaga.id}
                           situacao={vaga.situacao}
                           suspensa={vaga.suspensa}
-                          variant="buttons"
+                          variant="card"
                           isAdmin={isAdmin}
                           somenteLeitura={somenteLeitura}
+                          recrutadorId={vaga.recrutador_id}
+                          recrutadorNome={vaga.recrutador_nome}
+                          currentUserId={currentUserId}
                         />
                       </div>
                     </CardContent>
@@ -224,6 +240,7 @@ export function VagasKanban({
         open={sheetAberto}
         onOpenChange={setSheetAberto}
         somenteLeitura={somenteLeitura}
+        currentUserId={currentUserId}
       />
     </div>
   );

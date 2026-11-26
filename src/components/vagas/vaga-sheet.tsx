@@ -199,6 +199,7 @@ export function VagaSheet({
   onOpenChange: onOpenChangeProp,
   somenteLeitura = false,
   onEditarSolicitacao,
+  currentUserId,
 }: {
   unidades: Opcao[];
   cargos: Opcao[];
@@ -212,6 +213,7 @@ export function VagaSheet({
   onOpenChange?: (open: boolean) => void;
   somenteLeitura?: boolean;
   onEditarSolicitacao?: () => void;
+  currentUserId?: string;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
@@ -544,6 +546,8 @@ export function VagaSheet({
                   situacao={vaga.situacao}
                   suspensa={vaga.suspensa}
                   variant="buttons"
+                  recrutadorId={vaga.recrutador_id}
+                  currentUserId={currentUserId}
                 />
                 <Button variant="outline" size="sm" onClick={() => setMode("edit")}>
                   <Pencil className="size-4" />

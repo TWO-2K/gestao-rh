@@ -48,6 +48,7 @@ export function VagasTable({
   somenteLeitura = false,
   isGestor = false,
   isAdmin = false,
+  currentUserId,
 }: {
   vagas: VagaDetalhada[];
   unidades: Opcao[];
@@ -58,6 +59,7 @@ export function VagasTable({
   somenteLeitura?: boolean;
   isGestor?: boolean;
   isAdmin?: boolean;
+  currentUserId?: string;
 }) {
   const [vagaSelecionada, setVagaSelecionada] = useState<VagaDetalhada | null>(null);
   const [modo, setModo] = useState<Mode>("view");
@@ -103,6 +105,7 @@ export function VagasTable({
               <>
                 <TableHead>Experiência</TableHead>
                 <TableHead>Candidato(a)</TableHead>
+                <TableHead>Recrutador</TableHead>
               </>
             )}
           </TableRow>
@@ -154,6 +157,7 @@ export function VagasTable({
                     )}
                   </TableCell>
                   <TableCell>{vaga.candidato_aprovado ?? "—"}</TableCell>
+                  <TableCell>{vaga.recrutador_nome ?? "—"}</TableCell>
                 </>
               )}
             </TableRow>
@@ -171,6 +175,7 @@ export function VagasTable({
         open={sheetAberto}
         onOpenChange={setSheetAberto}
         somenteLeitura={somenteLeitura}
+        currentUserId={currentUserId}
         onEditarSolicitacao={
           isGestor && vagaSelecionada
             ? () => {

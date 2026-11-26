@@ -15,6 +15,7 @@ export const SITUACAO_VAGA_LABEL: Record<string, string> = {
   em_aberto: "Em aberto",
   fechado: "Fechado",
   cancelado: "Cancelado",
+  rejeitado: "Rejeitado",
 };
 
 export const STATUS_SLA_LABEL: Record<string, string> = {
@@ -34,6 +35,7 @@ export const SITUACAO_BADGE_VARIANT: Record<string, string> = {
   em_aberto: "bg-emerald-600 text-white border-emerald-600 dark:bg-emerald-500 dark:border-emerald-500",
   fechado: "bg-slate-500 text-white border-slate-500 dark:bg-slate-600 dark:border-slate-600",
   cancelado: "bg-red-600 text-white border-red-600 dark:bg-red-500 dark:border-red-500",
+  rejeitado: "bg-rose-800 text-white border-rose-800 dark:bg-rose-700 dark:border-rose-700",
 };
 
 export const STATUS_EXPERIENCIA_LABEL: Record<string, string> = {

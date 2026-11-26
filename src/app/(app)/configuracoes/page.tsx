@@ -8,7 +8,7 @@ import { NotificacaoTiposCard } from "@/components/configuracoes/notificacao-tip
 
 export default async function ConfiguracoesPage() {
   const profile = await getCurrentProfile();
-  if (!profile || (profile.papel !== "admin" && profile.papel !== "diretoria")) {
+  if (!profile || profile.papel !== "admin") {
     redirect("/vagas");
   }
 

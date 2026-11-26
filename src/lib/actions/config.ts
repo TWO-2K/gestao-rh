@@ -25,7 +25,7 @@ export async function definirLogo(formData: FormData) {
   if (!user) return { error: "Não autenticado" };
 
   const { data: profile } = await supabase.from("profiles").select("papel").eq("id", user.id).single();
-  if (profile?.papel !== "admin" && profile?.papel !== "diretoria") {
+  if (profile?.papel !== "admin") {
     return { error: "Apenas administradores podem alterar o logo." };
   }
 
