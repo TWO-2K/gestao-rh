@@ -68,7 +68,7 @@ export default async function DashboardPage() {
             Visão consolidada de todas as unidades do Grupo +B.
           </p>
         </div>
-        <ExportarVagas vagas={dados.vagas} />
+        <ExportarVagas filtro={{}} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

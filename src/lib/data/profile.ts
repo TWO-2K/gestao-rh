@@ -1,6 +1,7 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
-export async function getCurrentProfile() {
+export const getCurrentProfile = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -23,4 +24,4 @@ export async function getCurrentProfile() {
         funcionario_id: null,
         email: user.email ?? "",
       };
-}
+});

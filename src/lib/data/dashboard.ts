@@ -2,7 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function getDashboardData() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("vagas_detalhada").select("*");
+  const { data, error } = await supabase
+    .from("vagas_detalhada")
+    .select(
+      "id, situacao, status_sla, suspensa, dias_em_aberto, unidade_nome, setor_nome, motivo, periodo_experiencia_1, periodo_experiencia_2, candidato_aprovado, cargo_nome"
+    );
   if (error) throw error;
 
   const vagas = data ?? [];
@@ -65,7 +69,6 @@ export async function getDashboardData() {
     });
 
   return {
-    vagas,
     totalAbertas: abertas.length,
     totalEmAtraso: emAtraso.length,
     totalSuspensas: suspensas.length,

@@ -1,24 +1,31 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MARCA } from "@/lib/constants";
 
 const LOGO_BUCKET = "branding";
 
-export async function getLogoUrl() {
+const getLogoPath = cache(async () => {
   const supabase = await createClient();
   const { data } = await supabase.from("app_config").select("logo_path").eq("id", true).single();
+  return data?.logo_path ?? null;
+});
 
-  if (!data?.logo_path) return MARCA.logoSupermercado;
+export async function getLogoUrl() {
+  const supabase = await createClient();
+  const logoPath = await getLogoPath();
 
-  return supabase.storage.from(LOGO_BUCKET).getPublicUrl(data.logo_path).data.publicUrl;
+  if (!logoPath) return MARCA.logoSupermercado;
+
+  return supabase.storage.from(LOGO_BUCKET).getPublicUrl(logoPath).data.publicUrl;
 }
 
 export async function getAppConfig() {
   const supabase = await createClient();
-  const { data } = await supabase.from("app_config").select("logo_path").eq("id", true).single();
+  const logoPath = await getLogoPath();
 
-  const logoUrl = data?.logo_path
-    ? supabase.storage.from(LOGO_BUCKET).getPublicUrl(data.logo_path).data.publicUrl
+  const logoUrl = logoPath
+    ? supabase.storage.from(LOGO_BUCKET).getPublicUrl(logoPath).data.publicUrl
     : null;
 
   return { logoUrl };

@@ -54,19 +54,26 @@ export function InstallPwaCard() {
   return (
     <Card
       size="sm"
-      className="fixed right-4 bottom-4 z-50 hidden w-72 shadow-lg animate-in fade-in md:block"
+      className="fixed right-4 bottom-4 z-50 hidden w-64 border-primary/30 shadow-xl ring-primary/20 animate-in fade-in slide-in-from-bottom-2 md:block"
     >
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Image
-            src="/brand/mais-barato-logo.png"
-            alt=""
-            width={28}
-            height={28}
-            unoptimized
-            className="size-7 shrink-0 object-contain"
-          />
-          <CardTitle>Instale o RH +B</CardTitle>
+      <CardHeader className="pb-0">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <Image
+              src="/brand/mais-barato-logo.png"
+              alt=""
+              width={20}
+              height={20}
+              unoptimized
+              className="size-5 object-contain"
+            />
+          </div>
+          <div>
+            <CardTitle className="text-sm">Instale o RH +B</CardTitle>
+            <CardDescription className="text-xs leading-snug">
+              Acesso rápido pela tela inicial
+            </CardDescription>
+          </div>
         </div>
         <CardAction>
           <Button
@@ -80,14 +87,11 @@ export function InstallPwaCard() {
           </Button>
         </CardAction>
       </CardHeader>
-      <CardContent>
-        <CardDescription>Acesse mais rápido direto da tela inicial, sem abrir o navegador.</CardDescription>
-      </CardContent>
-      <CardFooter className="justify-end gap-2">
-        <Button variant="ghost" size="sm" onClick={dispensar} disabled={instalando}>
+      <CardFooter className="justify-end gap-2 bg-transparent border-t-0 pt-1">
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={dispensar} disabled={instalando}>
           Agora não
         </Button>
-        <Button size="sm" onClick={handleInstalar} disabled={instalando}>
+        <Button size="sm" className="h-7 px-2.5 text-xs" onClick={handleInstalar} disabled={instalando}>
           <Download className="size-3.5" />
           Instalar
         </Button>

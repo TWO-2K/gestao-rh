@@ -150,43 +150,78 @@ export default async function CadastrosPage({
           </div>
         }
         cargosContent={
-          <div className="overflow-x-auto rounded-md border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead>Setores onde é usado</TableHead>
-                  {isAdmin && <TableHead className="w-28" />}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cargosOrdenados.map((cargo) => {
-                  const setorIdsDoCargo = cargoSetorMap[cargo.id] ?? [];
-                  return (
-                    <TableRow key={cargo.id}>
-                      <TableCell className="font-medium">{cargo.nome}</TableCell>
-                      <TableCell className="flex flex-wrap gap-1">
-                        {setorIdsDoCargo.map((setorId) => (
-                          <Badge key={setorId} variant="outline">
-                            {setorNomePorId.get(setorId) ?? "—"}
-                          </Badge>
-                        ))}
-                      </TableCell>
-                      {isAdmin && (
-                        <TableCell>
+          <div className="flex flex-col gap-4">
+            <div className="hidden overflow-x-auto rounded-md border bg-card sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cargo</TableHead>
+                    <TableHead>Setores onde é usado</TableHead>
+                    {isAdmin && <TableHead className="w-28" />}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cargosOrdenados.map((cargo) => {
+                    const setorIdsDoCargo = cargoSetorMap[cargo.id] ?? [];
+                    return (
+                      <TableRow key={cargo.id}>
+                        <TableCell className="font-medium">{cargo.nome}</TableCell>
+                        <TableCell className="flex flex-wrap gap-1">
+                          {setorIdsDoCargo.map((setorId) => (
+                            <Badge key={setorId} variant="outline">
+                              {setorNomePorId.get(setorId) ?? "—"}
+                            </Badge>
+                          ))}
+                        </TableCell>
+                        {isAdmin && (
+                          <TableCell>
+                            <EditarCargoDialog
+                              id={cargo.id}
+                              nome={cargo.nome}
+                              setorIds={setorIdsDoCargo}
+                              setores={setores}
+                            />
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:hidden">
+              {cargosOrdenados.map((cargo) => {
+                const setorIdsDoCargo = cargoSetorMap[cargo.id] ?? [];
+                return (
+                  <Card key={cargo.id}>
+                    <CardContent className="flex flex-col gap-3 py-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-medium">{cargo.nome}</p>
+                        {isAdmin && (
                           <EditarCargoDialog
                             id={cargo.id}
                             nome={cargo.nome}
                             setorIds={setorIdsDoCargo}
                             setores={setores}
                           />
-                        </TableCell>
+                        )}
+                      </div>
+                      {setorIdsDoCargo.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {setorIdsDoCargo.map((setorId) => (
+                            <Badge key={setorId} variant="outline">
+                              {setorNomePorId.get(setorId) ?? "—"}
+                            </Badge>
+                          ))}
+                        </div>
                       )}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
             <div className="px-4">
               <PaginationControls
                 paginaAtual={paginaCargos}
@@ -221,53 +256,93 @@ export default async function CadastrosPage({
           </div>
         }
         funcionariosContent={
-          <div className="overflow-x-auto rounded-md border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Unidade</TableHead>
-                  <TableHead>Gestor</TableHead>
-                  <TableHead>Status</TableHead>
-                  {isAdmin && <TableHead className="w-56" />}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {funcionarios.map((f) => (
-                  <TableRow key={f.id}>
-                    <TableCell className="font-medium">{f.nome}</TableCell>
-                    <TableCell>{f.email ?? "—"}</TableCell>
-                    <TableCell>
-                      {f.unidade_id ? unidadeNomePorId.get(f.unidade_id) ?? "—" : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {f.eh_gestor ? <Badge variant="outline">Gestor</Badge> : "—"}
-                    </TableCell>
-                    <TableCell>
+          <div className="flex flex-col gap-4">
+            <div className="hidden overflow-x-auto rounded-md border bg-card sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>E-mail</TableHead>
+                    <TableHead>Unidade</TableHead>
+                    <TableHead>Gestor</TableHead>
+                    <TableHead>Status</TableHead>
+                    {isAdmin && <TableHead className="w-56" />}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {funcionarios.map((f) => (
+                    <TableRow key={f.id}>
+                      <TableCell className="font-medium">{f.nome}</TableCell>
+                      <TableCell>{f.email ?? "—"}</TableCell>
+                      <TableCell>
+                        {f.unidade_id ? unidadeNomePorId.get(f.unidade_id) ?? "—" : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {f.eh_gestor ? <Badge variant="outline">Gestor</Badge> : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={f.ativo ? "default" : "secondary"}>
+                          {f.ativo ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </TableCell>
+                      {isAdmin && (
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <EditarFuncionarioDialog
+                              id={f.id}
+                              nome={f.nome}
+                              email={f.email}
+                              unidadeId={f.unidade_id}
+                              ehGestor={f.eh_gestor}
+                              unidades={unidades}
+                            />
+                            <FuncionarioAtivoToggle id={f.id} ativo={f.ativo} />
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:hidden">
+              {funcionarios.map((f) => (
+                <Card key={f.id}>
+                  <CardContent className="flex flex-col gap-3 py-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="font-medium">{f.nome}</p>
+                        <p className="text-xs text-muted-foreground">{f.email ?? "—"}</p>
+                      </div>
                       <Badge variant={f.ativo ? "default" : "secondary"}>
                         {f.ativo ? "Ativo" : "Inativo"}
                       </Badge>
-                    </TableCell>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      <span>
+                        {f.unidade_id ? unidadeNomePorId.get(f.unidade_id) ?? "—" : "—"}
+                      </span>
+                      {f.eh_gestor && <Badge variant="outline">Gestor</Badge>}
+                    </div>
                     {isAdmin && (
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <EditarFuncionarioDialog
-                            id={f.id}
-                            nome={f.nome}
-                            email={f.email}
-                            unidadeId={f.unidade_id}
-                            ehGestor={f.eh_gestor}
-                            unidades={unidades}
-                          />
-                          <FuncionarioAtivoToggle id={f.id} ativo={f.ativo} />
-                        </div>
-                      </TableCell>
+                      <div className="flex items-center gap-2">
+                        <EditarFuncionarioDialog
+                          id={f.id}
+                          nome={f.nome}
+                          email={f.email}
+                          unidadeId={f.unidade_id}
+                          ehGestor={f.eh_gestor}
+                          unidades={unidades}
+                        />
+                        <FuncionarioAtivoToggle id={f.id} ativo={f.ativo} />
+                      </div>
                     )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
             <div className="px-4">
               <PaginationControls
                 paginaAtual={paginaFuncionarios}

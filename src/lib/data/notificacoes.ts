@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { TIPO_NOTIFICACAO_LABEL, type TipoNotificacao } from "@/lib/constants";
 
@@ -32,7 +33,7 @@ export async function getMinhasNotificacoes(filtro: { lida?: boolean } = {}, lim
   return data ?? [];
 }
 
-export async function getContagemNaoLidas() {
+export const getContagemNaoLidas = cache(async () => {
   const supabase = await createClient();
   const { count, error } = await supabase
     .from("notificacoes")
@@ -41,4 +42,4 @@ export async function getContagemNaoLidas() {
 
   if (error) throw error;
   return count ?? 0;
-}
+});
