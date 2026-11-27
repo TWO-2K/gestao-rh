@@ -1,5 +1,27 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+// getClaims() já decodifica o JWT localmente (sem round-trip de rede), mas a
+// busca do profile em si era uma query ao Postgres a cada requisição. Como o
+// profile de um usuário quase não muda, cacheamos por userId (unstable_cache,
+// compartilhado entre requisições) — as actions em usuarios.ts chamam
+// updateTag("profiles") ao criar/editar um usuário, então o cache nunca fica
+// velho.
+const getProfileData = unstable_cache(
+  async (userId: string) => {
+    const admin = createAdminClient();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id, nome, papel, funcionario_id")
+      .eq("id", userId)
+      .single();
+    return profile;
+  },
+  ["lookups-profile-por-id"],
+  { tags: ["profiles"] }
+);
 
 export const getCurrentProfile = cache(async () => {
   const supabase = await createClient();
@@ -11,11 +33,7 @@ export const getCurrentProfile = cache(async () => {
   const userId = claims.sub;
   const email = (claims.email as string | undefined) ?? "";
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, nome, papel, funcionario_id")
-    .eq("id", userId)
-    .single();
+  const profile = await getProfileData(userId);
 
   return profile
     ? { ...profile, email }

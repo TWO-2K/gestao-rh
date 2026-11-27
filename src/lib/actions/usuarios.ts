@@ -83,6 +83,7 @@ export async function criarUsuario(input: {
   revalidatePath("/usuarios");
   revalidatePath("/cadastros");
   updateTag("recrutadores");
+  updateTag("profiles");
   return { error: null };
 }
 
@@ -114,6 +115,7 @@ export async function atualizarUsuario(input: {
 
   revalidatePath("/usuarios");
   updateTag("recrutadores");
+  updateTag("profiles");
   return { error: null };
 }
 

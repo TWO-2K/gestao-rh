@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,6 +131,7 @@ export function LoginForm() {
           </div>
           {erro && <p className="text-sm text-destructive">{erro}</p>}
           <Button type="submit" disabled={isSubmitting} className="mt-2">
+            {isSubmitting && <Loader2 className="size-4 animate-spin" />}
             {isSubmitting ? "Entrando..." : "Entrar"}
           </Button>
         </form>

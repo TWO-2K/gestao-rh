@@ -16,9 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  useSidebar,
 } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { ModeToggle } from "@/components/mode-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { InstallPwaButton } from "@/components/layout/install-pwa-button";
@@ -70,15 +68,9 @@ export function AppSidebar({
   logoUrl: string;
 }) {
   const pathname = usePathname();
-  const { setOpen } = useSidebar();
-  const isMobile = useIsMobile();
 
   return (
-    <Sidebar
-      collapsible="icon"
-      onMouseEnter={isMobile ? undefined : () => setOpen(true)}
-      onMouseLeave={isMobile ? undefined : () => setOpen(false)}
-    >
+    <Sidebar collapsible="icon">
       <SidebarHeader className="px-3 py-4">
         <div className="flex items-center gap-2">
           <Image
