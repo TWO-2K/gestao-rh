@@ -1,7 +1,7 @@
 "use client";
 
-import { type ReactNode } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useState, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type TabValue = "unidades" | "setores" | "cargos" | "horarios_trabalho" | "funcionarios";
@@ -30,17 +30,20 @@ export function CadastrosTabs({
   horariosTrabalhoContent: ReactNode;
   funcionariosContent: ReactNode;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const abaNaUrl = searchParams.get("aba");
-  const tab: TabValue = ABAS.includes(abaNaUrl as TabValue) ? (abaNaUrl as TabValue) : "unidades";
+  const abaInicial: TabValue = ABAS.includes(abaNaUrl as TabValue)
+    ? (abaNaUrl as TabValue)
+    : "unidades";
+  const [tab, setTabState] = useState<TabValue>(abaInicial);
 
   function setTab(novaAba: TabValue) {
+    setTabState(novaAba);
     const params = new URLSearchParams(searchParams.toString());
     params.set("aba", novaAba);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
   }
 
   const actions: Record<TabValue, ReactNode> = {
