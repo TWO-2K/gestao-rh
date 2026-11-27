@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/data/profile";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Building2 } from "lucide-react";
 import { CadastrosTabs } from "@/components/cadastros/cadastros-tabs";
 import { NovaUnidadeForm } from "@/components/cadastros/nova-unidade-form";
@@ -59,6 +61,38 @@ export default async function CadastrosPage({
   const paginaCargos = paginaDaUrl(params.pagina_cargos);
   const paginaFuncionarios = paginaDaUrl(params.pagina_funcionarios);
 
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h1 className="text-xl font-semibold">Cadastros</h1>
+        <p className="text-sm text-muted-foreground">
+          Unidades e catálogo de cargos/setores usados no Mapa de Vagas.
+        </p>
+      </div>
+
+      <Suspense
+        key={`${paginaCargos}-${paginaFuncionarios}`}
+        fallback={<CadastrosConteudoSkeleton />}
+      >
+        <CadastrosConteudo
+          isAdmin={isAdmin}
+          paginaCargos={paginaCargos}
+          paginaFuncionarios={paginaFuncionarios}
+        />
+      </Suspense>
+    </div>
+  );
+}
+
+async function CadastrosConteudo({
+  isAdmin,
+  paginaCargos,
+  paginaFuncionarios,
+}: {
+  isAdmin: boolean;
+  paginaCargos: number;
+  paginaFuncionarios: number;
+}) {
   const [
     unidades,
     cargosComSetores,
@@ -91,14 +125,6 @@ export default async function CadastrosPage({
   const totalPaginasFuncionarios = Math.max(1, Math.ceil(totalFuncionarios / POR_PAGINA));
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Cadastros</h1>
-        <p className="text-sm text-muted-foreground">
-          Unidades e catálogo de cargos/setores usados no Mapa de Vagas.
-        </p>
-      </div>
-
       <CadastrosTabs
         unidadesAction={isAdmin ? <NovaUnidadeForm /> : undefined}
         setoresAction={isAdmin ? <NovoSetorForm /> : undefined}
@@ -353,6 +379,18 @@ export default async function CadastrosPage({
           </div>
         }
       />
+  );
+}
+
+function CadastrosConteudoSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Skeleton className="h-9 w-full sm:w-96" />
+      <div className="flex flex-col gap-2">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
     </div>
   );
 }

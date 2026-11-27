@@ -1,6 +1,7 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/data/profile";
-import { getVagas } from "@/lib/data/vagas";
+import { getVagas, type VagasFiltro } from "@/lib/data/vagas";
 import {
   getCargoSetorMap,
   getCargos,
@@ -18,6 +19,7 @@ import { VagaSheet } from "@/components/vagas/vaga-sheet";
 import { SolicitarVagaSheet } from "@/components/vagas/solicitar-vaga-sheet";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import type { MotivoVaga, SituacaoVaga } from "@/types/database";
@@ -62,29 +64,20 @@ export default async function VagasPage({
       : (isAdmin ? params.recrutador_id : undefined),
   };
 
-  const [
-    { vagas, total },
-    unidades,
-    cargos,
-    setores,
-    horariosTrabalho,
-    funcionarios,
-    cargoSetorMap,
-    recrutadores,
-  ] = await Promise.all([
-    // Kanban mostra tudo (quebrar por páginas distorceria as colunas); a
-    // tabela usa paginação real no banco (.range()).
-    getVagas(filtro, ehKanban ? undefined : { pagina, porPagina: POR_PAGINA }),
-    getUnidades(),
-    getCargos(),
-    getSetores(),
-    getHorariosTrabalho(),
-    getFuncionarios(),
-    getCargoSetorMap(),
-    isAdmin ? getRecrutadores() : Promise.resolve([]),
-  ]);
+  // Tabelas de referência (cacheadas) + funcionários/recrutadores: rápido,
+  // alimenta o cabeçalho e os filtros, que já renderizam sem esperar a busca
+  // de vagas em si (a parte lenta, isolada no Suspense abaixo).
+  const [unidades, cargos, setores, horariosTrabalho, funcionarios, cargoSetorMap, recrutadores] =
+    await Promise.all([
+      getUnidades(),
+      getCargos(),
+      getSetores(),
+      getHorariosTrabalho(),
+      getFuncionarios(),
+      getCargoSetorMap(),
+      isAdmin ? getRecrutadores() : Promise.resolve([]),
+    ]);
 
-  const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
   const gestores = funcionarios.filter((f) => f.eh_gestor);
 
   return (
@@ -92,10 +85,6 @@ export default async function VagasPage({
       <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div>
           <h1 className="text-xl font-semibold">{isGestor ? "Minhas solicitações" : "Mapa de Vagas"}</h1>
-          <p className="text-sm text-muted-foreground">
-            {total} vaga{total === 1 ? "" : "s"} encontrada
-            {total === 1 ? "" : "s"}
-          </p>
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           {isGestor ? (
@@ -160,6 +149,74 @@ export default async function VagasPage({
         />
       </div>
 
+      <Suspense
+        key={JSON.stringify({ filtro, pagina, ehKanban })}
+        fallback={<VagasConteudoSkeleton ehKanban={ehKanban} />}
+      >
+        <VagasConteudo
+          filtro={filtro}
+          pagina={pagina}
+          ehKanban={ehKanban}
+          unidades={unidades}
+          cargos={cargos}
+          setores={setores}
+          horariosTrabalho={horariosTrabalho}
+          funcionarios={funcionarios}
+          cargoSetorMap={cargoSetorMap}
+          isAdmin={isAdmin}
+          isGestor={isGestor}
+          somenteLeitura={somenteLeitura}
+          currentUserId={profile.id}
+        />
+      </Suspense>
+    </div>
+  );
+}
+
+async function VagasConteudo({
+  filtro,
+  pagina,
+  ehKanban,
+  unidades,
+  cargos,
+  setores,
+  horariosTrabalho,
+  funcionarios,
+  cargoSetorMap,
+  isAdmin,
+  isGestor,
+  somenteLeitura,
+  currentUserId,
+}: {
+  filtro: VagasFiltro;
+  pagina: number;
+  ehKanban: boolean;
+  unidades: Awaited<ReturnType<typeof getUnidades>>;
+  cargos: Awaited<ReturnType<typeof getCargos>>;
+  setores: Awaited<ReturnType<typeof getSetores>>;
+  horariosTrabalho: Awaited<ReturnType<typeof getHorariosTrabalho>>;
+  funcionarios: Awaited<ReturnType<typeof getFuncionarios>>;
+  cargoSetorMap: Awaited<ReturnType<typeof getCargoSetorMap>>;
+  isAdmin: boolean;
+  isGestor: boolean;
+  somenteLeitura: boolean;
+  currentUserId: string;
+}) {
+  const { vagas, total } = await getVagas(
+    filtro,
+    // Kanban mostra tudo (quebrar por páginas distorceria as colunas); a
+    // tabela usa paginação real no banco (.range()).
+    ehKanban ? undefined : { pagina, porPagina: POR_PAGINA }
+  );
+  const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+
+  return (
+    <>
+      <p className="-mt-2 shrink-0 text-sm text-muted-foreground">
+        {total} vaga{total === 1 ? "" : "s"} encontrada
+        {total === 1 ? "" : "s"}
+      </p>
+
       {ehKanban ? (
         <div className="lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <VagasKanban
@@ -172,7 +229,7 @@ export default async function VagasPage({
             cargoSetorMap={cargoSetorMap}
             isAdmin={isAdmin}
             somenteLeitura={somenteLeitura}
-            currentUserId={profile.id}
+            currentUserId={currentUserId}
           />
         </div>
       ) : (
@@ -188,10 +245,27 @@ export default async function VagasPage({
             somenteLeitura={somenteLeitura}
             isGestor={isGestor}
             isAdmin={isAdmin}
-            currentUserId={profile.id}
+            currentUserId={currentUserId}
           />
           <PaginationControls paginaAtual={pagina} totalPaginas={totalPaginas} />
         </>
+      )}
+    </>
+  );
+}
+
+function VagasConteudoSkeleton({ ehKanban }: { ehKanban: boolean }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className="-mt-2 h-4 w-28" />
+      {ehKanban ? (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-64 w-full" />
+          ))}
+        </div>
+      ) : (
+        Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/data/profile";
 import { getUsuarios } from "@/lib/data/usuarios";
@@ -11,8 +12,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { PAPEL_BADGE_VARIANT, PAPEL_LABEL } from "@/lib/constants";
+import type { PapelUsuario } from "@/types/database";
 import { NovoUsuarioForm } from "@/components/usuarios/novo-usuario-form";
 import { EditarUsuarioDialog } from "@/components/usuarios/editar-usuario-dialog";
 import { RedefinirSenhaDialog } from "@/components/usuarios/redefinir-senha-dialog";
@@ -26,6 +29,31 @@ export default async function UsuariosPage() {
   // Diretoria só visualiza usuários — não cria, edita, redefine senha ou bloqueia.
   const isAdmin = profile.papel === "admin";
 
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-semibold">Usuários</h1>
+          <p className="text-sm text-muted-foreground">
+            Contas de acesso ao sistema, papel e unidades que cada recrutador(a) pode ver.
+          </p>
+        </div>
+      </div>
+
+      <Suspense fallback={<UsuariosConteudoSkeleton />}>
+        <UsuariosConteudo isAdmin={isAdmin} papelAtor={profile.papel} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function UsuariosConteudo({
+  isAdmin,
+  papelAtor,
+}: {
+  isAdmin: boolean;
+  papelAtor: PapelUsuario;
+}) {
   const [usuarios, unidades, funcionarios] = await Promise.all([
     getUsuarios(),
     getAllUnidades(),
@@ -40,19 +68,13 @@ export default async function UsuariosPage() {
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold">Usuários</h1>
-          <p className="text-sm text-muted-foreground">
-            Contas de acesso ao sistema, papel e unidades que cada recrutador(a) pode ver.
-          </p>
-        </div>
+    <>
+      <div className="flex justify-end">
         {isAdmin && (
           <NovoUsuarioForm
             unidades={unidades}
             funcionarios={funcionariosDisponiveis}
-            papelAtor={profile.papel}
+            papelAtor={papelAtor}
           />
         )}
       </div>
@@ -103,7 +125,7 @@ export default async function UsuariosPage() {
                       papelAtual={u.papel}
                       unidadeIdsAtuais={u.unidades.map((un) => un.id)}
                       unidades={unidades}
-                      papelAtor={profile.papel}
+                      papelAtor={papelAtor}
                     />
                     <RedefinirSenhaDialog id={u.id} />
                     <BloqueioToggle id={u.id} bloqueado={u.bloqueado} />
@@ -114,6 +136,16 @@ export default async function UsuariosPage() {
           </TableBody>
         </Table>
       </div>
+    </>
+  );
+}
+
+function UsuariosConteudoSkeleton() {
+  return (
+    <div className="flex flex-col gap-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full" />
+      ))}
     </div>
   );
 }

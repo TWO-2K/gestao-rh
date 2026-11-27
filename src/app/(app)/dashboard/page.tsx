@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { AlertTriangle, Briefcase, Clock, Hourglass, PauseCircle } from "lucide-react";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getCurrentProfile } from "@/lib/data/profile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MOTIVO_VAGA_LABEL } from "@/lib/constants";
 import { VagasPorUnidadeChart } from "@/components/dashboard/vagas-por-unidade-chart";
 import { VagasPorSetorChart } from "@/components/dashboard/vagas-por-setor-chart";
@@ -18,9 +20,30 @@ function formatarData(data: string | null) {
 }
 
 export default async function DashboardPage() {
-  const dados = await getDashboardData();
   const profile = await getCurrentProfile();
   const isAdmin = profile?.papel === "admin" || profile?.papel === "diretoria";
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">Painel de Gestão</h1>
+          <p className="text-sm text-muted-foreground">
+            Visão consolidada de todas as unidades do Grupo +B.
+          </p>
+        </div>
+        <ExportarVagas filtro={{}} />
+      </div>
+
+      <Suspense fallback={<DashboardConteudoSkeleton />}>
+        <DashboardConteudo isAdmin={isAdmin} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function DashboardConteudo({ isAdmin }: { isAdmin: boolean }) {
+  const dados = await getDashboardData();
 
   const kpis = [
     ...(isAdmin
@@ -61,16 +84,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Painel de Gestão</h1>
-          <p className="text-sm text-muted-foreground">
-            Visão consolidada de todas as unidades do Grupo +B.
-          </p>
-        </div>
-        <ExportarVagas filtro={{}} />
-      </div>
-
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {kpis.map((kpi) => (
           <Card key={kpi.label}>
@@ -150,6 +163,23 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function DashboardConteudoSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full" />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-6 gap-y-4 sm:gap-8">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-40 w-full sm:w-64" />
+        ))}
+      </div>
     </div>
   );
 }
