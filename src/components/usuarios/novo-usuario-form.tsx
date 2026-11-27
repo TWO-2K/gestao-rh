@@ -80,8 +80,8 @@ export function NovoUsuarioForm({
           <DialogTitle>Novo usuário</DialogTitle>
           <DialogDescription>
             O funcionário precisa já estar cadastrado em Cadastros → Funcionários. Ao
-            selecionar, o e-mail cadastrado é preenchido automaticamente — ajuste aqui se
-            precisar.
+            selecionar, o e-mail cadastrado é preenchido automaticamente; se o funcionário
+            ainda não tiver e-mail, informe um aqui.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -91,8 +91,7 @@ export function NovoUsuarioForm({
               value={funcionarioId || null}
               onValueChange={(v) => {
                 setFuncionarioId(v ?? "");
-                const email = funcionarios.find((f) => f.id === v)?.email;
-                if (email) setEmail(email);
+                setEmail(funcionarios.find((f) => f.id === v)?.email ?? "");
               }}
             >
               <SelectTrigger className="w-full">
@@ -124,6 +123,7 @@ export function NovoUsuarioForm({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="nome@maisbarato.com"
+              disabled={!!funcionarios.find((f) => f.id === funcionarioId)?.email}
             />
           </div>
           <div className="flex flex-col gap-1">
