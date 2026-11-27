@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export async function criarUnidade(nome: string, codigo: string) {
@@ -11,6 +11,7 @@ export async function criarUnidade(nome: string, codigo: string) {
     .insert({ nome: nome.trim(), codigo: codigo.trim() || null });
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("unidades");
   return { error: null };
 }
 
@@ -23,6 +24,7 @@ export async function atualizarUnidade(id: string, nome: string, codigo: string)
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("unidades");
   return { error: null };
 }
 
@@ -31,5 +33,6 @@ export async function alternarAtivoUnidade(id: string, ativo: boolean) {
   const { error } = await supabase.from("unidades").update({ ativo }).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("unidades");
   return { error: null };
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export async function criarSetor(nome: string) {
@@ -9,6 +9,7 @@ export async function criarSetor(nome: string) {
   const { error } = await supabase.from("setores").insert({ nome: nome.trim() });
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("setores");
   return { error: null };
 }
 
@@ -21,6 +22,7 @@ export async function atualizarSetor(id: string, nome: string) {
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("setores");
   return { error: null };
 }
 
@@ -36,6 +38,7 @@ export async function excluirSetor(id: string) {
     return { error: error.message };
   }
   revalidatePath("/cadastros");
+  updateTag("setores");
   return { error: null };
 }
 
@@ -45,6 +48,7 @@ export async function criarHorarioTrabalho(nome: string) {
   const { error } = await supabase.from("horarios_trabalho").insert({ nome: nome.trim() });
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("horarios-trabalho");
   return { error: null };
 }
 
@@ -57,6 +61,7 @@ export async function atualizarHorarioTrabalho(id: string, nome: string) {
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("horarios-trabalho");
   return { error: null };
 }
 
@@ -72,6 +77,7 @@ export async function excluirHorarioTrabalho(id: string) {
     return { error: error.message };
   }
   revalidatePath("/cadastros");
+  updateTag("horarios-trabalho");
   return { error: null };
 }
 
@@ -92,6 +98,7 @@ export async function criarCargo(nome: string, setorIds: string[]) {
   if (vinculoError) return { error: vinculoError.message };
 
   revalidatePath("/cadastros");
+  updateTag("cargos");
   return { error: null };
 }
 
@@ -115,5 +122,6 @@ export async function atualizarCargo(id: string, nome: string, setorIds: string[
   if (vinculoError) return { error: vinculoError.message };
 
   revalidatePath("/cadastros");
+  updateTag("cargos");
   return { error: null };
 }
