@@ -128,7 +128,7 @@ export function ExportarVagas({
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="outline" disabled={carregando}>
+          <Button variant="outline" disabled={carregando} className="w-full sm:w-auto">
             <Download className="size-4" />
             Exportar
           </Button>

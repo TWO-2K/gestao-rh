@@ -17,6 +17,7 @@ type Opcao = { id: string; nome: string };
 export function SolicitarVagaSheet({
   cargos,
   setores,
+  horariosTrabalho,
   cargoSetorMap,
   trigger,
   vagaId,
@@ -26,6 +27,7 @@ export function SolicitarVagaSheet({
 }: {
   cargos: Opcao[];
   setores: Opcao[];
+  horariosTrabalho: Opcao[];
   cargoSetorMap: Record<string, string[]>;
   trigger?: React.ReactElement;
   vagaId?: string;
@@ -40,7 +42,7 @@ export function SolicitarVagaSheet({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       {trigger && <SheetTrigger render={trigger} />}
-      <SheetContent className="w-full overflow-y-auto data-[side=right]:sm:max-w-[34rem]">
+      <SheetContent className="overflow-y-auto data-[side=right]:w-full data-[side=right]:sm:max-w-[34rem]">
         <SheetHeader className="gap-2 px-6 pt-5 pb-2">
           <SheetTitle className="text-lg">
             {vagaId ? "Editar solicitação" : "Solicitar vaga"}
@@ -55,6 +57,7 @@ export function SolicitarVagaSheet({
           <SolicitarVagaForm
             cargos={cargos}
             setores={setores}
+            horariosTrabalho={horariosTrabalho}
             cargoSetorMap={cargoSetorMap}
             vagaId={vagaId}
             defaultValues={defaultValues}

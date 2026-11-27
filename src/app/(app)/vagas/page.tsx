@@ -5,6 +5,8 @@ import {
   getCargoSetorMap,
   getCargos,
   getFuncionarios,
+  getHorariosTrabalho,
+  getRecrutadores,
   getSetores,
   getUnidades,
 } from "@/lib/data/lookups";
@@ -18,7 +20,7 @@ import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
-import type { SituacaoVaga } from "@/types/database";
+import type { MotivoVaga, SituacaoVaga } from "@/types/database";
 import { cn } from "@/lib/utils";
 
 const POR_PAGINA = 20;
@@ -34,6 +36,7 @@ export default async function VagasPage({
   const isGestor = profile.papel === "gestor";
   const isDiretoria = profile.papel === "diretoria";
   const isAdmin = profile.papel === "admin" || isDiretoria;
+  const isRecrutador = !isGestor && !isAdmin;
   // Diretoria só visualiza, aprova e rejeita — não edita dados da vaga.
   const somenteLeitura = isGestor || isDiretoria;
   const ehKanban = params.view !== "tabela" && !isGestor;
@@ -45,23 +48,44 @@ export default async function VagasPage({
     unidade_id: params.unidade_id,
     situacao: params.situacao as SituacaoVaga | undefined,
     setor_id: params.setor_id,
+    cargo_id: params.cargo_id,
+    motivo: params.motivo as MotivoVaga | undefined,
+    horario_trabalho_id: params.horario_trabalho_id,
+    gestor_id: params.gestor_id,
+    status_sla: params.status_sla,
     busca: params.busca,
     suspensa: params.suspensa === "sim" ? true : params.suspensa === "nao" ? false : undefined,
+    data_abertura_de: params.data_abertura_de,
+    data_abertura_ate: params.data_abertura_ate,
+    recrutador_id: isRecrutador
+      ? (params.minhas === "sim" ? profile.id : undefined)
+      : (isAdmin ? params.recrutador_id : undefined),
   };
 
-  const [{ vagas, total }, unidades, cargos, setores, funcionarios, cargoSetorMap] =
-    await Promise.all([
-      // Kanban mostra tudo (quebrar por páginas distorceria as colunas); a
-      // tabela usa paginação real no banco (.range()).
-      getVagas(filtro, ehKanban ? undefined : { pagina, porPagina: POR_PAGINA }),
-      getUnidades(),
-      getCargos(),
-      getSetores(),
-      getFuncionarios(),
-      getCargoSetorMap(),
-    ]);
+  const [
+    { vagas, total },
+    unidades,
+    cargos,
+    setores,
+    horariosTrabalho,
+    funcionarios,
+    cargoSetorMap,
+    recrutadores,
+  ] = await Promise.all([
+    // Kanban mostra tudo (quebrar por páginas distorceria as colunas); a
+    // tabela usa paginação real no banco (.range()).
+    getVagas(filtro, ehKanban ? undefined : { pagina, porPagina: POR_PAGINA }),
+    getUnidades(),
+    getCargos(),
+    getSetores(),
+    getHorariosTrabalho(),
+    getFuncionarios(),
+    getCargoSetorMap(),
+    isAdmin ? getRecrutadores() : Promise.resolve([]),
+  ]);
 
   const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+  const gestores = funcionarios.filter((f) => f.eh_gestor);
 
   return (
     <div className={cn("flex flex-col gap-4", ehKanban && "lg:h-full lg:min-h-0")}>
@@ -73,14 +97,15 @@ export default async function VagasPage({
             {total === 1 ? "" : "s"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           {isGestor ? (
             <SolicitarVagaSheet
               cargos={cargos}
               setores={setores}
+              horariosTrabalho={horariosTrabalho}
               cargoSetorMap={cargoSetorMap}
               trigger={
-                <Button>
+                <Button className="col-span-2 w-full sm:w-auto">
                   <Plus className="size-4" />
                   Solicitar vaga
                 </Button>
@@ -91,7 +116,12 @@ export default async function VagasPage({
               <ExportarVagas filtro={filtro} />
               {!isDiretoria && (
                 <>
-                  <Button variant="outline" nativeButton={false} render={<Link href="/vagas/importar" />}>
+                  <Button
+                    variant="outline"
+                    nativeButton={false}
+                    className="w-full sm:w-auto"
+                    render={<Link href="/vagas/importar" />}
+                  >
                     <Upload className="size-4" />
                     Importar planilha
                   </Button>
@@ -99,10 +129,11 @@ export default async function VagasPage({
                     unidades={unidades}
                     cargos={cargos}
                     setores={setores}
+                    horariosTrabalho={horariosTrabalho}
                     funcionarios={funcionarios}
                     cargoSetorMap={cargoSetorMap}
                     trigger={
-                      <Button>
+                      <Button className="col-span-2 w-full sm:w-auto">
                         <Plus className="size-4" />
                         Nova vaga
                       </Button>
@@ -116,7 +147,17 @@ export default async function VagasPage({
       </div>
 
       <div className="shrink-0">
-        <VagasFiltros unidades={unidades} setores={setores} somenteLeitura={isGestor} />
+        <VagasFiltros
+          unidades={unidades}
+          setores={setores}
+          cargos={cargos}
+          horariosTrabalho={horariosTrabalho}
+          gestores={gestores}
+          recrutadores={recrutadores}
+          somenteLeitura={isGestor}
+          isRecrutador={isRecrutador}
+          isAdmin={isAdmin}
+        />
       </div>
 
       {ehKanban ? (
@@ -126,6 +167,7 @@ export default async function VagasPage({
             unidades={unidades}
             cargos={cargos}
             setores={setores}
+            horariosTrabalho={horariosTrabalho}
             funcionarios={funcionarios}
             cargoSetorMap={cargoSetorMap}
             isAdmin={isAdmin}
@@ -140,6 +182,7 @@ export default async function VagasPage({
             unidades={unidades}
             cargos={cargos}
             setores={setores}
+            horariosTrabalho={horariosTrabalho}
             funcionarios={funcionarios}
             cargoSetorMap={cargoSetorMap}
             somenteLeitura={somenteLeitura}

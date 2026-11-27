@@ -61,7 +61,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold">Painel de Gestão</h1>
           <p className="text-sm text-muted-foreground">
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
         <ExportarVagas vagas={dados.vagas} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {kpis.map((kpi) => (
           <Card key={kpi.label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -115,7 +115,7 @@ export default async function DashboardPage() {
         <CardHeader>
           <CardTitle className="text-sm font-medium">Vagas abertas por motivo</CardTitle>
         </CardHeader>
-        <CardContent className="flex gap-8">
+        <CardContent className="flex flex-wrap gap-6 gap-y-4 sm:gap-8">
           {dados.porMotivo.map((item) => (
             <div key={item.motivo} className="flex flex-col">
               <span className="text-2xl font-bold">{item.quantidade}</span>

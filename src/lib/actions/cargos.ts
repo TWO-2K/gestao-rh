@@ -39,6 +39,42 @@ export async function excluirSetor(id: string) {
   return { error: null };
 }
 
+export async function criarHorarioTrabalho(nome: string) {
+  if (!nome.trim()) return { error: "Informe o nome do horário" };
+  const supabase = await createClient();
+  const { error } = await supabase.from("horarios_trabalho").insert({ nome: nome.trim() });
+  if (error) return { error: error.message };
+  revalidatePath("/cadastros");
+  return { error: null };
+}
+
+export async function atualizarHorarioTrabalho(id: string, nome: string) {
+  if (!nome.trim()) return { error: "Informe o nome do horário" };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("horarios_trabalho")
+    .update({ nome: nome.trim() })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/cadastros");
+  return { error: null };
+}
+
+export async function excluirHorarioTrabalho(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("horarios_trabalho").delete().eq("id", id);
+  if (error) {
+    if (error.code === "23503") {
+      return {
+        error: "Não é possível excluir: este horário está em uso por vagas.",
+      };
+    }
+    return { error: error.message };
+  }
+  revalidatePath("/cadastros");
+  return { error: null };
+}
+
 export async function criarCargo(nome: string, setorIds: string[]) {
   if (!nome.trim()) return { error: "Informe o nome do cargo" };
   if (setorIds.length === 0) return { error: "Selecione ao menos um setor" };

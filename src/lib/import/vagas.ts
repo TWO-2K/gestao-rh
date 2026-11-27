@@ -44,7 +44,7 @@ export type LinhaValidada = {
     cargo_id: string;
     setor_id: string;
     motivo: "substituicao" | "aumento_de_quadro";
-    horario_trabalho: string | null;
+    horario_trabalho_id: string | null;
     gestor_id: string | null;
     data_abertura: string;
     sla_dias: number;
@@ -127,6 +127,7 @@ export function validarLinha(
   contexto: {
     cargosPorNome: Map<string, { id: string; nome: string }>;
     setoresPorNome: Map<string, { id: string; nome: string }>;
+    horariosPorNome: Map<string, { id: string; nome: string }>;
     funcionariosPorNome: Map<string, { id: string; nome: string }>;
     cargoSetorMap: Record<string, string[]>;
   }
@@ -153,6 +154,14 @@ export function validarLinha(
     } else {
       erros.push("Cargo não está vinculado a nenhum setor");
     }
+  }
+
+  let horarioTrabalhoId: string | null = null;
+  const horarioNome = texto(original.horario_trabalho);
+  if (horarioNome) {
+    const horario = contexto.horariosPorNome.get(normalizar(horarioNome));
+    if (!horario) erros.push(`Horário de trabalho "${horarioNome}" não encontrado no cadastro`);
+    else horarioTrabalhoId = horario.id;
   }
 
   const motivo = parseMotivo(original.motivo);
@@ -200,7 +209,7 @@ export function validarLinha(
       cargo_id: cargo!.id,
       setor_id: setorId!,
       motivo: motivo!,
-      horario_trabalho: texto(original.horario_trabalho),
+      horario_trabalho_id: horarioTrabalhoId,
       gestor_id: gestorId,
       data_abertura: dataAbertura!,
       sla_dias: sla,

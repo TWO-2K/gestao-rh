@@ -5,7 +5,7 @@ export const vagaFormSchema = z
     unidade_id: z.string().uuid("Selecione a unidade"),
     cargo_id: z.string().uuid("Selecione o cargo"),
     setor_id: z.string().uuid("Selecione o setor"),
-    horario_trabalho: z.string().optional().or(z.literal("")),
+    horario_trabalho_id: z.string().uuid().optional().or(z.literal("")),
     gestor_id: z.string().uuid().optional().or(z.literal("")),
     motivo: z.enum(["substituicao", "aumento_de_quadro"]),
     justificativa: z.string().optional().or(z.literal("")),
@@ -44,7 +44,7 @@ export const solicitarVagaSchema = z.object({
   cargo_id: z.string().uuid("Selecione o cargo"),
   setor_id: z.string().uuid("Selecione o setor"),
   motivo: z.enum(["substituicao", "aumento_de_quadro"]),
-  horario_trabalho: z.string().optional().or(z.literal("")),
+  horario_trabalho_id: z.string().uuid().optional().or(z.literal("")),
   justificativa: z.string().optional().or(z.literal("")),
 });
 

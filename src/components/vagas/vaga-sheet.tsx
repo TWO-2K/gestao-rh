@@ -123,7 +123,7 @@ function vagaParaFormValues(vaga: VagaDetalhada): Partial<VagaFormValues> {
     unidade_id: vaga.unidade_id,
     cargo_id: vaga.cargo_id,
     setor_id: vaga.setor_id,
-    horario_trabalho: vaga.horario_trabalho ?? "",
+    horario_trabalho_id: vaga.horario_trabalho_id ?? "",
     gestor_id: vaga.gestor_id ?? "",
     motivo: vaga.motivo,
     justificativa: vaga.justificativa ?? "",
@@ -190,6 +190,7 @@ export function VagaSheet({
   unidades,
   cargos,
   setores,
+  horariosTrabalho,
   funcionarios,
   cargoSetorMap,
   vaga = null,
@@ -204,6 +205,7 @@ export function VagaSheet({
   unidades: Opcao[];
   cargos: Opcao[];
   setores: Opcao[];
+  horariosTrabalho: Opcao[];
   funcionarios: FuncionarioOpcao[];
   cargoSetorMap: Record<string, string[]>;
   vaga?: VagaDetalhada | null;
@@ -286,7 +288,7 @@ export function VagaSheet({
       </AlertDialog>
       <Sheet open={open} onOpenChange={handleOpenChange}>
       {trigger && <SheetTrigger render={trigger} />}
-      <SheetContent className="w-full overflow-y-auto data-[side=right]:sm:max-w-[34rem]">
+      <SheetContent className="overflow-y-auto data-[side=right]:w-full data-[side=right]:sm:max-w-[34rem]">
         <SheetHeader className="gap-2 px-6 pt-5 pb-2">
           <div className="flex flex-wrap items-center gap-2">
             <SheetTitle className="text-lg">{titulo}</SheetTitle>
@@ -340,7 +342,7 @@ export function VagaSheet({
 
               <TabsContent value="detalhes" className="flex flex-col gap-8 px-6 pt-4 pb-2">
               <SecaoCard titulo="Informações gerais">
-                <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-6">
                   <Campo label="Unidade" icon={Building2}>
                     {vaga.unidade_nome}
                   </Campo>
@@ -354,7 +356,7 @@ export function VagaSheet({
                     {MOTIVO_VAGA_LABEL[vaga.motivo]}
                   </Campo>
                   <Campo label="Horário de trabalho" icon={Clock}>
-                    {vaga.horario_trabalho ?? "—"}
+                    {vaga.horario_trabalho_nome ?? "—"}
                   </Campo>
                   <Campo label="Gestor solicitante" icon={User}>
                     {vaga.gestor_nome ?? "—"}
@@ -404,7 +406,7 @@ export function VagaSheet({
 
               {(vaga.candidato_aprovado || vaga.data_fechamento || vaga.data_admissao) && (
                 <SecaoCard titulo="Fechamento">
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-6">
                     <Campo label="Candidato(a) aprovado(a)" icon={User}>
                       {vaga.candidato_aprovado ?? "—"}
                     </Campo>
@@ -571,6 +573,7 @@ export function VagaSheet({
               unidades={unidades}
               cargos={cargos}
               setores={setores}
+              horariosTrabalho={horariosTrabalho}
               funcionarios={funcionarios}
               cargoSetorMap={cargoSetorMap}
               vagaId={mode === "edit" ? vaga?.id : undefined}

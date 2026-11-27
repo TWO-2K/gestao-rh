@@ -9,7 +9,6 @@ import { solicitarVagaSchema, type SolicitarVagaValues } from "@/lib/validators/
 import { atualizarMinhaSolicitacao, solicitarVaga } from "@/lib/actions/vagas";
 import { MOTIVO_VAGA_LABEL } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -25,6 +24,7 @@ type Opcao = { id: string; nome: string };
 export function SolicitarVagaForm({
   cargos,
   setores,
+  horariosTrabalho,
   cargoSetorMap,
   vagaId,
   defaultValues,
@@ -32,6 +32,7 @@ export function SolicitarVagaForm({
 }: {
   cargos: Opcao[];
   setores: Opcao[];
+  horariosTrabalho: Opcao[];
   cargoSetorMap: Record<string, string[]>;
   vagaId?: string;
   defaultValues?: SolicitarVagaValues;
@@ -176,8 +177,29 @@ export function SolicitarVagaForm({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="horario_trabalho">Horário de trabalho</Label>
-          <Input id="horario_trabalho" {...register("horario_trabalho")} />
+          <Label>Horário de trabalho</Label>
+          <Controller
+            control={control}
+            name="horario_trabalho_id"
+            render={({ field }) => (
+              <Select value={field.value || null} onValueChange={field.onChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o horário">
+                    {(value: string | null) =>
+                      horariosTrabalho.find((h) => h.id === value)?.nome ?? "Selecione o horário"
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {horariosTrabalho.map((h) => (
+                    <SelectItem key={h.id} value={h.id}>
+                      {h.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
       </div>
 

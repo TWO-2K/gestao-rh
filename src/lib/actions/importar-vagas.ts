@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getCargos, getCargoSetorMap, getFuncionarios, getSetores } from "@/lib/data/lookups";
+import {
+  getCargos,
+  getCargoSetorMap,
+  getFuncionarios,
+  getHorariosTrabalho,
+  getSetores,
+} from "@/lib/data/lookups";
 import { validarLinha, type LinhaBruta, type LinhaValidada } from "@/lib/import/vagas";
 
 function normalizar(texto: string) {
@@ -14,9 +20,10 @@ function normalizar(texto: string) {
 }
 
 async function montarContexto() {
-  const [cargos, setores, funcionarios, cargoSetorMap] = await Promise.all([
+  const [cargos, setores, horarios, funcionarios, cargoSetorMap] = await Promise.all([
     getCargos(),
     getSetores(),
+    getHorariosTrabalho(),
     getFuncionarios(),
     getCargoSetorMap(),
   ]);
@@ -24,6 +31,7 @@ async function montarContexto() {
   return {
     cargosPorNome: new Map(cargos.map((c) => [normalizar(c.nome), c])),
     setoresPorNome: new Map(setores.map((s) => [normalizar(s.nome), s])),
+    horariosPorNome: new Map(horarios.map((h) => [normalizar(h.nome), h])),
     funcionariosPorNome: new Map(funcionarios.map((f) => [normalizar(f.nome), f])),
     cargoSetorMap,
   };
@@ -54,7 +62,7 @@ export async function confirmarImportacao(unidadeId: string, linhas: LinhaBruta[
       cargo_id: l.dados!.cargo_id,
       setor_id: l.dados!.setor_id,
       motivo: l.dados!.motivo,
-      horario_trabalho: l.dados!.horario_trabalho,
+      horario_trabalho_id: l.dados!.horario_trabalho_id,
       gestor_id: l.dados!.gestor_id,
       data_abertura: l.dados!.data_abertura,
       sla_dias: l.dados!.sla_dias,

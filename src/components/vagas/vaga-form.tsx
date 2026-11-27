@@ -64,6 +64,7 @@ export function VagaForm({
   unidades,
   cargos,
   setores,
+  horariosTrabalho,
   funcionarios,
   cargoSetorMap,
   vagaId,
@@ -75,6 +76,7 @@ export function VagaForm({
   unidades: Opcao[];
   cargos: Opcao[];
   setores: Opcao[];
+  horariosTrabalho: Opcao[];
   funcionarios: FuncionarioOpcao[];
   cargoSetorMap: Record<string, string[]>;
   vagaId?: string;
@@ -208,7 +210,7 @@ export function VagaForm({
       className="flex flex-col gap-6 text-sm [&_input]:text-sm [&_label]:text-xs [&_button[role=combobox]]:text-sm"
     >
       <Secao>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <div className="flex flex-col gap-2">
             <Label>Unidade</Label>
             <Controller
@@ -328,10 +330,31 @@ export function VagaForm({
 
 
       <Secao>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="horario_trabalho">Horário de trabalho</Label>
-            <Input id="horario_trabalho" {...register("horario_trabalho")} />
+            <Label>Horário de trabalho</Label>
+            <Controller
+              control={control}
+              name="horario_trabalho_id"
+              render={({ field }) => (
+                <Select value={field.value || null} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione o horário">
+                      {(value: string | null) =>
+                        horariosTrabalho.find((h) => h.id === value)?.nome ?? "Selecione o horário"
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {horariosTrabalho.map((h) => (
+                      <SelectItem key={h.id} value={h.id}>
+                        {h.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -398,8 +421,8 @@ export function VagaForm({
 
 
       <Secao>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-2 sm:col-span-2">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="col-span-2 flex flex-col gap-2">
             <Label htmlFor="candidato_aprovado">Candidato(a) aprovado(a)</Label>
             <Input id="candidato_aprovado" {...register("candidato_aprovado")} />
             {errors.candidato_aprovado && (

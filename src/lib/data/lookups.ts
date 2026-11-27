@@ -56,6 +56,12 @@ export async function getSetores() {
   return data ?? [];
 }
 
+export async function getHorariosTrabalho() {
+  const supabase = await createClient();
+  const { data } = await supabase.from("horarios_trabalho").select("id, nome").order("nome");
+  return data ?? [];
+}
+
 export async function getFuncionarios() {
   const supabase = await createClient();
   const { data } = await supabase
@@ -79,6 +85,16 @@ export async function getFuncionariosPaginado(pagina: number, porPagina: number)
     .range(from, to);
   if (error) throw error;
   return { data: data ?? [], total: count ?? 0 };
+}
+
+export async function getRecrutadores() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, nome")
+    .eq("papel", "recrutador")
+    .order("nome");
+  return data ?? [];
 }
 
 export async function getVagasAbertasPorSetor() {

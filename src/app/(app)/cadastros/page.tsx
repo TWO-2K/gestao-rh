@@ -6,6 +6,7 @@ import {
   getCargosComSetores,
   getCargosPaginado,
   getFuncionariosPaginado,
+  getHorariosTrabalho,
   getSetores,
   getVagasAbertasPorSetor,
 } from "@/lib/data/lookups";
@@ -31,6 +32,8 @@ import { NovoCargoForm } from "@/components/cadastros/novo-cargo-form";
 import { EditarCargoDialog } from "@/components/cadastros/editar-cargo-dialog";
 import { NovoSetorForm } from "@/components/cadastros/novo-setor-form";
 import { SetorCard } from "@/components/cadastros/setor-card";
+import { NovoHorarioTrabalhoForm } from "@/components/cadastros/novo-horario-trabalho-form";
+import { EditarHorarioTrabalhoDialog } from "@/components/cadastros/editar-horario-trabalho-dialog";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 
 const POR_PAGINA = 20;
@@ -63,6 +66,7 @@ export default async function CadastrosPage({
     cargoSetorMap,
     { data: funcionarios, total: totalFuncionarios },
     setores,
+    horariosTrabalho,
     vagasAbertasPorSetor,
   ] = await Promise.all([
     getAllUnidades(),
@@ -71,6 +75,7 @@ export default async function CadastrosPage({
     getCargoSetorMap(),
     getFuncionariosPaginado(paginaFuncionarios, POR_PAGINA),
     getSetores(),
+    getHorariosTrabalho(),
     getVagasAbertasPorSetor(),
   ]);
 
@@ -98,6 +103,7 @@ export default async function CadastrosPage({
         unidadesAction={isAdmin ? <NovaUnidadeForm /> : undefined}
         setoresAction={isAdmin ? <NovoSetorForm /> : undefined}
         cargosAction={isAdmin ? <NovoCargoForm setores={setores} /> : undefined}
+        horariosTrabalhoAction={isAdmin ? <NovoHorarioTrabalhoForm /> : undefined}
         funcionariosAction={isAdmin ? <NovoFuncionarioForm unidades={unidades} /> : undefined}
         unidadesContent={
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -144,7 +150,7 @@ export default async function CadastrosPage({
           </div>
         }
         cargosContent={
-          <div className="overflow-hidden rounded-md border bg-card">
+          <div className="overflow-x-auto rounded-md border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -190,8 +196,32 @@ export default async function CadastrosPage({
             </div>
           </div>
         }
+        horariosTrabalhoContent={
+          <div className="overflow-x-auto rounded-md border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Horário de trabalho</TableHead>
+                  {isAdmin && <TableHead className="w-36" />}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {horariosTrabalho.map((h) => (
+                  <TableRow key={h.id}>
+                    <TableCell className="font-medium">{h.nome}</TableCell>
+                    {isAdmin && (
+                      <TableCell>
+                        <EditarHorarioTrabalhoDialog id={h.id} nome={h.nome} />
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        }
         funcionariosContent={
-          <div className="overflow-hidden rounded-md border bg-card">
+          <div className="overflow-x-auto rounded-md border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>

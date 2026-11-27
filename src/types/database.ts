@@ -201,6 +201,25 @@ export type Database = {
           },
         ];
       };
+      horarios_trabalho: {
+        Row: {
+          created_at: string;
+          id: string;
+          nome: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          nome: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          nome?: string;
+        };
+        Relationships: [];
+      };
       notificacao_tipo_config: {
         Row: {
           ativo: boolean;
@@ -449,7 +468,7 @@ export type Database = {
           experiencia_1_status: Database["public"]["Enums"]["status_experiencia"];
           experiencia_2_status: Database["public"]["Enums"]["status_experiencia"];
           gestor_id: string | null;
-          horario_trabalho: string | null;
+          horario_trabalho_id: string | null;
           id: string;
           justificativa: string | null;
           motivo: Database["public"]["Enums"]["motivo_vaga"];
@@ -480,7 +499,7 @@ export type Database = {
           experiencia_1_status?: Database["public"]["Enums"]["status_experiencia"];
           experiencia_2_status?: Database["public"]["Enums"]["status_experiencia"];
           gestor_id?: string | null;
-          horario_trabalho?: string | null;
+          horario_trabalho_id?: string | null;
           id?: string;
           justificativa?: string | null;
           motivo: Database["public"]["Enums"]["motivo_vaga"];
@@ -510,7 +529,7 @@ export type Database = {
           experiencia_1_status?: Database["public"]["Enums"]["status_experiencia"];
           experiencia_2_status?: Database["public"]["Enums"]["status_experiencia"];
           gestor_id?: string | null;
-          horario_trabalho?: string | null;
+          horario_trabalho_id?: string | null;
           id?: string;
           justificativa?: string | null;
           motivo?: Database["public"]["Enums"]["motivo_vaga"];
@@ -542,6 +561,13 @@ export type Database = {
             columns: ["gestor_id"];
             isOneToOne: false;
             referencedRelation: "funcionarios";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "vagas_horario_trabalho_id_fkey";
+            columns: ["horario_trabalho_id"];
+            isOneToOne: false;
+            referencedRelation: "horarios_trabalho";
             referencedColumns: ["id"];
           },
           {
@@ -584,7 +610,8 @@ export type Database = {
           experiencia_2_status: Database["public"]["Enums"]["status_experiencia"];
           gestor_id: string | null;
           gestor_nome: string | null;
-          horario_trabalho: string | null;
+          horario_trabalho_id: string | null;
+          horario_trabalho_nome: string | null;
           id: string;
           justificativa: string | null;
           motivo: Database["public"]["Enums"]["motivo_vaga"];
@@ -621,6 +648,13 @@ export type Database = {
             columns: ["gestor_id"];
             isOneToOne: false;
             referencedRelation: "funcionarios";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "vagas_horario_trabalho_id_fkey";
+            columns: ["horario_trabalho_id"];
+            isOneToOne: false;
+            referencedRelation: "horarios_trabalho";
             referencedColumns: ["id"];
           },
           {

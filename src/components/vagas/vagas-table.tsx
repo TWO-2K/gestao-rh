@@ -43,6 +43,7 @@ export function VagasTable({
   unidades,
   cargos,
   setores,
+  horariosTrabalho,
   funcionarios,
   cargoSetorMap,
   somenteLeitura = false,
@@ -54,6 +55,7 @@ export function VagasTable({
   unidades: Opcao[];
   cargos: Opcao[];
   setores: Opcao[];
+  horariosTrabalho: Opcao[];
   funcionarios: FuncionarioOpcao[];
   cargoSetorMap: Record<string, string[]>;
   somenteLeitura?: boolean;
@@ -87,25 +89,25 @@ export function VagasTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-md border bg-card">
+    <div className="overflow-x-auto rounded-md border bg-card">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Nº</TableHead>
             <TableHead>Unidade</TableHead>
             <TableHead>Cargo</TableHead>
-            <TableHead>Setor</TableHead>
+            <TableHead className="hidden lg:table-cell">Setor</TableHead>
+            {!isGestor && <TableHead>Recrutador</TableHead>}
             <TableHead>Motivo</TableHead>
-            <TableHead>Abertura</TableHead>
-            <TableHead>Previsão</TableHead>
-            <TableHead>Dias em aberto</TableHead>
+            <TableHead className="hidden md:table-cell">Abertura</TableHead>
+            <TableHead className="hidden md:table-cell">Previsão</TableHead>
+            <TableHead className="hidden md:table-cell">Dias em aberto</TableHead>
             <TableHead>Situação</TableHead>
-            <TableHead>SLA</TableHead>
+            <TableHead className="hidden md:table-cell">SLA</TableHead>
             {!isGestor && (
               <>
-                <TableHead>Experiência</TableHead>
+                <TableHead className="hidden lg:table-cell">Experiência</TableHead>
                 <TableHead>Candidato(a)</TableHead>
-                <TableHead>Recrutador</TableHead>
               </>
             )}
           </TableRow>
@@ -119,12 +121,17 @@ export function VagasTable({
             >
               <TableCell className="font-medium">{vaga.numero}</TableCell>
               <TableCell>{vaga.unidade_nome}</TableCell>
-              <TableCell>{vaga.cargo_nome}</TableCell>
-              <TableCell>{vaga.setor_nome}</TableCell>
-              <TableCell>{MOTIVO_VAGA_LABEL[vaga.motivo]}</TableCell>
-              <TableCell>{formatarData(vaga.data_abertura)}</TableCell>
-              <TableCell>{formatarData(vaga.previsao_fechamento)}</TableCell>
               <TableCell>
+                <span className="block max-w-[180px] truncate" title={vaga.cargo_nome}>
+                  {vaga.cargo_nome}
+                </span>
+              </TableCell>
+              <TableCell className="hidden lg:table-cell">{vaga.setor_nome}</TableCell>
+              {!isGestor && <TableCell>{vaga.recrutador_nome ?? "—"}</TableCell>}
+              <TableCell>{MOTIVO_VAGA_LABEL[vaga.motivo]}</TableCell>
+              <TableCell className="hidden md:table-cell">{formatarData(vaga.data_abertura)}</TableCell>
+              <TableCell className="hidden md:table-cell">{formatarData(vaga.previsao_fechamento)}</TableCell>
+              <TableCell className="hidden md:table-cell">
                 {vaga.dias_em_aberto === null ? "—" : `${vaga.dias_em_aberto} dias`}
               </TableCell>
               <TableCell>
@@ -135,7 +142,7 @@ export function VagasTable({
                   {SITUACAO_VAGA_LABEL[vaga.situacao]}
                 </Badge>
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden md:table-cell">
                 {vaga.status_sla && (
                   <Badge
                     variant="outline"
@@ -147,7 +154,7 @@ export function VagasTable({
               </TableCell>
               {!isGestor && (
                 <>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     {vaga.situacao === "fechado" && !vaga.data_admissao ? (
                       <AvisoAdmissaoFaltante />
                     ) : (
@@ -157,7 +164,6 @@ export function VagasTable({
                     )}
                   </TableCell>
                   <TableCell>{vaga.candidato_aprovado ?? "—"}</TableCell>
-                  <TableCell>{vaga.recrutador_nome ?? "—"}</TableCell>
                 </>
               )}
             </TableRow>
@@ -170,6 +176,7 @@ export function VagasTable({
         unidades={unidades}
         cargos={cargos}
         setores={setores}
+        horariosTrabalho={horariosTrabalho}
         funcionarios={funcionarios}
         cargoSetorMap={cargoSetorMap}
         open={sheetAberto}
@@ -189,6 +196,7 @@ export function VagasTable({
         <SolicitarVagaSheet
           cargos={cargos}
           setores={setores}
+          horariosTrabalho={horariosTrabalho}
           cargoSetorMap={cargoSetorMap}
           vagaId={vagaParaEditar?.id}
           defaultValues={
@@ -197,7 +205,7 @@ export function VagasTable({
                   cargo_id: vagaParaEditar.cargo_id,
                   setor_id: vagaParaEditar.setor_id,
                   motivo: vagaParaEditar.motivo,
-                  horario_trabalho: vagaParaEditar.horario_trabalho ?? "",
+                  horario_trabalho_id: vagaParaEditar.horario_trabalho_id ?? "",
                   justificativa: vagaParaEditar.justificativa ?? "",
                 }
               : undefined
