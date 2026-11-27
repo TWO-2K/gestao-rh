@@ -3,26 +3,17 @@
 import Image from "next/image";
 import { MARCA } from "@/lib/constants";
 import { InstallPwaButton } from "@/components/layout/install-pwa-button";
-import { NotificacaoBell } from "@/components/layout/notificacao-bell";
 import { UserMenu } from "@/components/layout/user-menu";
-import type { Tables } from "@/types/database";
-
-type Notificacao = Pick<
-  Tables<"notificacoes">,
-  "id" | "tipo" | "titulo" | "mensagem" | "vaga_id" | "lida" | "lida_em" | "created_at"
->;
 
 export function MobileTopBar({
   nome,
   papel,
-  notificacoes,
-  contagemNaoLida,
+  notificacoesSlot,
   logoUrl,
 }: {
   nome: string;
   papel: string;
-  notificacoes: Notificacao[];
-  contagemNaoLida: number;
+  notificacoesSlot: React.ReactNode;
   logoUrl: string;
 }) {
   return (
@@ -40,7 +31,7 @@ export function MobileTopBar({
       </div>
       <div className="flex items-center gap-1">
         <InstallPwaButton />
-        <NotificacaoBell notificacoes={notificacoes} contagemNaoLida={contagemNaoLida} />
+        {notificacoesSlot}
         <UserMenu nome={nome} papel={papel} />
       </div>
     </header>

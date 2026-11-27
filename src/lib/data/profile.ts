@@ -3,25 +3,27 @@ import { createClient } from "@/lib/supabase/server";
 
 export const getCurrentProfile = cache(async () => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
 
-  if (!user) return null;
+  if (!claims) return null;
+
+  const userId = claims.sub;
+  const email = (claims.email as string | undefined) ?? "";
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("id, nome, papel, funcionario_id")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   return profile
-    ? { ...profile, email: user.email ?? "" }
+    ? { ...profile, email }
     : {
-        id: user.id,
-        nome: user.email ?? "Usuário",
+        id: userId,
+        nome: email || "Usuário",
         papel: "recrutador" as const,
         funcionario_id: null,
-        email: user.email ?? "",
+        email,
       };
 });

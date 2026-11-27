@@ -21,10 +21,8 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ModeToggle } from "@/components/mode-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
-import { NotificacaoBell } from "@/components/layout/notificacao-bell";
 import { InstallPwaButton } from "@/components/layout/install-pwa-button";
 import { Separator } from "@/components/ui/separator";
-import type { Tables } from "@/types/database";
 
 export type NavItem = {
   href: string;
@@ -60,22 +58,15 @@ export function filtrarNavItems(papel: string): NavItem[] {
   );
 }
 
-type Notificacao = Pick<
-  Tables<"notificacoes">,
-  "id" | "tipo" | "titulo" | "mensagem" | "vaga_id" | "lida" | "lida_em" | "created_at"
->;
-
 export function AppSidebar({
   nome,
   papel,
-  notificacoes,
-  contagemNaoLida,
+  notificacoesSlot,
   logoUrl,
 }: {
   nome: string;
   papel: string;
-  notificacoes: Notificacao[];
-  contagemNaoLida: number;
+  notificacoesSlot: React.ReactNode;
   logoUrl: string;
 }) {
   const pathname = usePathname();
@@ -132,7 +123,7 @@ export function AppSidebar({
         <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:flex-col">
           <UserMenu nome={nome} papel={papel} />
           <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col">
-            <NotificacaoBell notificacoes={notificacoes} contagemNaoLida={contagemNaoLida} />
+            {notificacoesSlot}
             <InstallPwaButton />
             <ModeToggle />
           </div>

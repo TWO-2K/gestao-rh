@@ -18,7 +18,7 @@ export async function getConfigTiposNotificacao() {
     }));
 }
 
-export async function getMinhasNotificacoes(filtro: { lida?: boolean } = {}, limit = 50) {
+export const getMinhasNotificacoes = cache(async (filtro: { lida?: boolean } = {}, limit = 50) => {
   const supabase = await createClient();
   let query = supabase
     .from("notificacoes")
@@ -31,7 +31,7 @@ export async function getMinhasNotificacoes(filtro: { lida?: boolean } = {}, lim
   const { data, error } = await query;
   if (error) throw error;
   return data ?? [];
-}
+});
 
 export const getContagemNaoLidas = cache(async () => {
   const supabase = await createClient();
