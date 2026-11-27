@@ -8,8 +8,6 @@ const root = path.resolve(__dirname, "..");
 const logoPath = path.join(root, "public/brand/mais-barato-logo.png");
 const outDir = path.join(root, "public/icons");
 
-const BRAND_RED = "#E2131A";
-
 async function makeIcon({ size, logoScale, outFile, background }) {
   const logoSize = Math.round(size * logoScale);
   const logo = await sharp(logoPath)
@@ -39,7 +37,13 @@ async function main() {
   await makeIcon({ size: 192, logoScale: 0.8, outFile: "icon-192.png", background: TRANSPARENT });
   await makeIcon({ size: 512, logoScale: 0.8, outFile: "icon-512.png", background: TRANSPARENT });
   // Maskable variant needs a solid background + extra safe-zone padding since OS icon masks crop the edges.
-  await makeIcon({ size: 512, logoScale: 0.6, outFile: "icon-512-maskable.png", background: BRAND_RED });
+  // White (not brand red) so the logo's own red elements ("B", "MAIS BARATO") stay visible instead of blending in.
+  await makeIcon({
+    size: 512,
+    logoScale: 0.6,
+    outFile: "icon-512-maskable.png",
+    background: { r: 255, g: 255, b: 255, alpha: 255 },
+  });
 }
 
 main();

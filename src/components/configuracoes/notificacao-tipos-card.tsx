@@ -1,5 +1,6 @@
 "use client";
 
+import { useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { alterarTipoNotificacaoAtivo } from "@/lib/actions/notificacoes";
@@ -33,18 +34,27 @@ const GRUPOS: { titulo: string; tipos: TipoNotificacao[] }[] = [
 
 export function NotificacaoTiposCard({ tipos }: { tipos: TipoConfig[] }) {
   const router = useRouter();
+  const [, startTransition] = useTransition();
+  const [tiposOtimistas, setTipoOtimista] = useOptimistic(
+    tipos,
+    (state, { tipo, ativo }: { tipo: TipoNotificacao; ativo: boolean }) =>
+      state.map((item) => (item.tipo === tipo ? { ...item, ativo } : item))
+  );
 
-  async function handleChange(tipo: TipoNotificacao, ativo: boolean) {
-    const result = await alterarTipoNotificacaoAtivo(tipo, ativo);
-    if (result.error) {
-      toast.error(result.error);
-      return;
-    }
-    toast.success(ativo ? "Notificação ativada" : "Notificação desativada");
-    router.refresh();
+  function handleChange(tipo: TipoNotificacao, ativo: boolean) {
+    startTransition(async () => {
+      setTipoOtimista({ tipo, ativo });
+      const result = await alterarTipoNotificacaoAtivo(tipo, ativo);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(ativo ? "Notificação ativada" : "Notificação desativada");
+      router.refresh();
+    });
   }
 
-  const porTipo = new Map(tipos.map((item) => [item.tipo, item]));
+  const porTipo = new Map(tiposOtimistas.map((item) => [item.tipo, item]));
 
   return (
     <Card>
