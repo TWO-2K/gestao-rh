@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -96,15 +95,19 @@ export const getHorariosTrabalho = unstable_cache(
   { tags: ["horarios-trabalho"] }
 );
 
-export const getFuncionarios = cache(async () => {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("funcionarios")
-    .select("id, nome, email, unidade_id, eh_gestor")
-    .eq("ativo", true)
-    .order("nome");
-  return data ?? [];
-});
+export const getFuncionarios = unstable_cache(
+  async () => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("funcionarios")
+      .select("id, nome, email, unidade_id, eh_gestor")
+      .eq("ativo", true)
+      .order("nome");
+    return data ?? [];
+  },
+  ["lookups-funcionarios-ativos"],
+  { tags: ["funcionarios"] }
+);
 
 // Lista paginada para a tela de Cadastros (o quadro de funcionários real
 // pode crescer para centenas de registros entre as unidades).
@@ -121,15 +124,19 @@ export async function getFuncionariosPaginado(pagina: number, porPagina: number)
   return { data: data ?? [], total: count ?? 0 };
 }
 
-export const getRecrutadores = cache(async () => {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, nome")
-    .eq("papel", "recrutador")
-    .order("nome");
-  return data ?? [];
-});
+export const getRecrutadores = unstable_cache(
+  async () => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, nome")
+      .eq("papel", "recrutador")
+      .order("nome");
+    return data ?? [];
+  },
+  ["lookups-recrutadores"],
+  { tags: ["recrutadores"] }
+);
 
 export async function getVagasAbertasPorSetor() {
   const supabase = await createClient();

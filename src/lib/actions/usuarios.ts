@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PapelUsuario } from "@/types/database";
@@ -82,6 +82,7 @@ export async function criarUsuario(input: {
 
   revalidatePath("/usuarios");
   revalidatePath("/cadastros");
+  updateTag("recrutadores");
   return { error: null };
 }
 
@@ -112,6 +113,7 @@ export async function atualizarUsuario(input: {
   }
 
   revalidatePath("/usuarios");
+  updateTag("recrutadores");
   return { error: null };
 }
 

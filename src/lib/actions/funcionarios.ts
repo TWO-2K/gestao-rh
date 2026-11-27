@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export async function criarFuncionario(
@@ -19,6 +19,7 @@ export async function criarFuncionario(
   });
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("funcionarios");
   return { error: null };
 }
 
@@ -42,6 +43,7 @@ export async function atualizarFuncionario(
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("funcionarios");
   return { error: null };
 }
 
@@ -50,5 +52,6 @@ export async function alternarAtivoFuncionario(id: string, ativo: boolean) {
   const { error } = await supabase.from("funcionarios").update({ ativo }).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/cadastros");
+  updateTag("funcionarios");
   return { error: null };
 }

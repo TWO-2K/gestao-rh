@@ -64,6 +64,21 @@ export default async function VagasPage({
       : (isAdmin ? params.recrutador_id : undefined),
   };
 
+  // Todas estas lookups são cacheadas entre requisições (unstable_cache), então
+  // isso não precisa de Suspense/skeleton próprio: o cabeçalho sai pronto
+  // junto com o título, sem loading visível.
+  const [unidades, cargos, setores, horariosTrabalho, funcionarios, cargoSetorMap, recrutadores] =
+    await Promise.all([
+      getUnidades(),
+      getCargos(),
+      getSetores(),
+      getHorariosTrabalho(),
+      getFuncionarios(),
+      getCargoSetorMap(),
+      isAdmin ? getRecrutadores() : Promise.resolve([]),
+    ]);
+  const gestores = funcionarios.filter((f) => f.eh_gestor);
+
   return (
     <div className={cn("flex flex-col gap-4", ehKanban && "lg:h-full lg:min-h-0")}>
       <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
@@ -72,9 +87,18 @@ export default async function VagasPage({
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           {isGestor ? (
-            <Suspense fallback={<Skeleton className="col-span-2 h-9 w-full sm:w-36" />}>
-              <SolicitarVagaAcao />
-            </Suspense>
+            <SolicitarVagaSheet
+              cargos={cargos}
+              setores={setores}
+              horariosTrabalho={horariosTrabalho}
+              cargoSetorMap={cargoSetorMap}
+              trigger={
+                <Button className="col-span-2 w-full sm:w-auto">
+                  <Plus className="size-4" />
+                  Solicitar vaga
+                </Button>
+              }
+            />
           ) : (
             <>
               <ExportarVagas filtro={filtro} />
@@ -89,9 +113,20 @@ export default async function VagasPage({
                     <Upload className="size-4" />
                     Importar planilha
                   </Button>
-                  <Suspense fallback={<Skeleton className="col-span-2 h-9 w-full sm:w-32" />}>
-                    <NovaVagaAcao />
-                  </Suspense>
+                  <VagaSheet
+                    unidades={unidades}
+                    cargos={cargos}
+                    setores={setores}
+                    horariosTrabalho={horariosTrabalho}
+                    funcionarios={funcionarios}
+                    cargoSetorMap={cargoSetorMap}
+                    trigger={
+                      <Button className="col-span-2 w-full sm:w-auto">
+                        <Plus className="size-4" />
+                        Nova vaga
+                      </Button>
+                    }
+                  />
                 </>
               )}
             </>
@@ -100,9 +135,17 @@ export default async function VagasPage({
       </div>
 
       <div className="shrink-0">
-        <Suspense fallback={<Skeleton className="h-10 w-full sm:w-80" />}>
-          <VagasFiltrosSection isGestor={isGestor} isRecrutador={isRecrutador} isAdmin={isAdmin} />
-        </Suspense>
+        <VagasFiltros
+          unidades={unidades}
+          setores={setores}
+          cargos={cargos}
+          horariosTrabalho={horariosTrabalho}
+          gestores={gestores}
+          recrutadores={recrutadores}
+          somenteLeitura={isGestor}
+          isRecrutador={isRecrutador}
+          isAdmin={isAdmin}
+        />
       </div>
 
       <Suspense
@@ -117,101 +160,15 @@ export default async function VagasPage({
           isGestor={isGestor}
           somenteLeitura={somenteLeitura}
           currentUserId={profile.id}
+          unidades={unidades}
+          cargos={cargos}
+          setores={setores}
+          horariosTrabalho={horariosTrabalho}
+          funcionarios={funcionarios}
+          cargoSetorMap={cargoSetorMap}
         />
       </Suspense>
     </div>
-  );
-}
-
-// Cada ação/slice do cabeçalho busca só o que precisa; as lookups cacheadas
-// (unstable_cache) e as deduplicadas via cache() do React (getFuncionarios,
-// getRecrutadores) garantem que isso não vira query duplicada por request.
-
-async function NovaVagaAcao() {
-  const [unidades, cargos, setores, horariosTrabalho, funcionarios, cargoSetorMap] =
-    await Promise.all([
-      getUnidades(),
-      getCargos(),
-      getSetores(),
-      getHorariosTrabalho(),
-      getFuncionarios(),
-      getCargoSetorMap(),
-    ]);
-
-  return (
-    <VagaSheet
-      unidades={unidades}
-      cargos={cargos}
-      setores={setores}
-      horariosTrabalho={horariosTrabalho}
-      funcionarios={funcionarios}
-      cargoSetorMap={cargoSetorMap}
-      trigger={
-        <Button className="col-span-2 w-full sm:w-auto">
-          <Plus className="size-4" />
-          Nova vaga
-        </Button>
-      }
-    />
-  );
-}
-
-async function SolicitarVagaAcao() {
-  const [cargos, setores, horariosTrabalho, cargoSetorMap] = await Promise.all([
-    getCargos(),
-    getSetores(),
-    getHorariosTrabalho(),
-    getCargoSetorMap(),
-  ]);
-
-  return (
-    <SolicitarVagaSheet
-      cargos={cargos}
-      setores={setores}
-      horariosTrabalho={horariosTrabalho}
-      cargoSetorMap={cargoSetorMap}
-      trigger={
-        <Button className="col-span-2 w-full sm:w-auto">
-          <Plus className="size-4" />
-          Solicitar vaga
-        </Button>
-      }
-    />
-  );
-}
-
-async function VagasFiltrosSection({
-  isGestor,
-  isRecrutador,
-  isAdmin,
-}: {
-  isGestor: boolean;
-  isRecrutador: boolean;
-  isAdmin: boolean;
-}) {
-  const [unidades, cargos, setores, horariosTrabalho, funcionarios, recrutadores] =
-    await Promise.all([
-      getUnidades(),
-      getCargos(),
-      getSetores(),
-      getHorariosTrabalho(),
-      getFuncionarios(),
-      isAdmin ? getRecrutadores() : Promise.resolve([]),
-    ]);
-  const gestores = funcionarios.filter((f) => f.eh_gestor);
-
-  return (
-    <VagasFiltros
-      unidades={unidades}
-      setores={setores}
-      cargos={cargos}
-      horariosTrabalho={horariosTrabalho}
-      gestores={gestores}
-      recrutadores={recrutadores}
-      somenteLeitura={isGestor}
-      isRecrutador={isRecrutador}
-      isAdmin={isAdmin}
-    />
   );
 }
 
@@ -223,6 +180,12 @@ async function VagasConteudo({
   isGestor,
   somenteLeitura,
   currentUserId,
+  unidades,
+  cargos,
+  setores,
+  horariosTrabalho,
+  funcionarios,
+  cargoSetorMap,
 }: {
   filtro: VagasFiltro;
   pagina: number;
@@ -231,22 +194,19 @@ async function VagasConteudo({
   isGestor: boolean;
   somenteLeitura: boolean;
   currentUserId: string;
+  unidades: Awaited<ReturnType<typeof getUnidades>>;
+  cargos: Awaited<ReturnType<typeof getCargos>>;
+  setores: Awaited<ReturnType<typeof getSetores>>;
+  horariosTrabalho: Awaited<ReturnType<typeof getHorariosTrabalho>>;
+  funcionarios: Awaited<ReturnType<typeof getFuncionarios>>;
+  cargoSetorMap: Awaited<ReturnType<typeof getCargoSetorMap>>;
 }) {
-  const [{ vagas, total }, unidades, cargos, setores, horariosTrabalho, funcionarios, cargoSetorMap] =
-    await Promise.all([
-      getVagas(
-        filtro,
-        // Kanban mostra tudo (quebrar por páginas distorceria as colunas); a
-        // tabela usa paginação real no banco (.range()).
-        ehKanban ? undefined : { pagina, porPagina: POR_PAGINA }
-      ),
-      getUnidades(),
-      getCargos(),
-      getSetores(),
-      getHorariosTrabalho(),
-      getFuncionarios(),
-      getCargoSetorMap(),
-    ]);
+  const { vagas, total } = await getVagas(
+    filtro,
+    // Kanban mostra tudo (quebrar por páginas distorceria as colunas); a
+    // tabela usa paginação real no banco (.range()).
+    ehKanban ? undefined : { pagina, porPagina: POR_PAGINA }
+  );
   const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
 
   return (
