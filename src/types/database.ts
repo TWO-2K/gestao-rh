@@ -716,7 +716,7 @@ export type Database = {
     };
     Enums: {
       motivo_vaga: "substituicao" | "aumento_de_quadro";
-      papel_usuario: "diretoria" | "recrutador" | "gestor" | "admin";
+      papel_usuario: "diretoria" | "recrutador" | "gestor" | "admin" | "gerente";
       situacao_vaga: "em_aberto" | "fechado" | "cancelado" | "pendente_aprovacao" | "rejeitado";
       status_experiencia: "pendente" | "aprovado" | "reprovado";
     };
@@ -838,7 +838,7 @@ export const Constants = {
   public: {
     Enums: {
       motivo_vaga: ["substituicao", "aumento_de_quadro"],
-      papel_usuario: ["diretoria", "recrutador", "gestor", "admin"],
+      papel_usuario: ["diretoria", "recrutador", "gestor", "admin", "gerente"],
       situacao_vaga: ["em_aberto", "fechado", "cancelado", "pendente_aprovacao", "rejeitado"],
       status_experiencia: ["pendente", "aprovado", "reprovado"],
     },

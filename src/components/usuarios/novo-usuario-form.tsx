@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { PapelUsuario } from "@/types/database";
 
 type Opcao = { id: string; nome: string };
 type FuncionarioOpcao = { id: string; nome: string; email: string | null };
@@ -34,14 +35,14 @@ export function NovoUsuarioForm({
 }: {
   unidades: Opcao[];
   funcionarios: FuncionarioOpcao[];
-  papelAtor: "admin" | "diretoria" | "recrutador" | "gestor";
+  papelAtor: PapelUsuario;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [funcionarioId, setFuncionarioId] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [papel, setPapel] = useState<"admin" | "diretoria" | "recrutador" | "gestor">("recrutador");
+  const [papel, setPapel] = useState<PapelUsuario>("recrutador");
   const [unidadeIds, setUnidadeIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -142,12 +143,13 @@ export function NovoUsuarioForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recrutador">Recrutador(a)</SelectItem>
-                <SelectItem value="diretoria">Diretoria</SelectItem>
-                <SelectItem value="gestor">Gestor(a) solicitante</SelectItem>
                 {papelAtor === "admin" && (
                   <SelectItem value="admin">Administrador</SelectItem>
                 )}
+                <SelectItem value="diretoria">Diretoria</SelectItem>
+                <SelectItem value="gerente">Gerente</SelectItem>
+                <SelectItem value="gestor">Gestor(a) solicitante</SelectItem>
+                <SelectItem value="recrutador">Recrutador(a)</SelectItem>
               </SelectContent>
             </Select>
           </div>

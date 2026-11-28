@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { PapelUsuario } from "@/types/database";
 
 type Opcao = { id: string; nome: string };
 
@@ -35,10 +36,10 @@ export function EditarUsuarioDialog({
 }: {
   id: string;
   nomeAtual: string;
-  papelAtual: "admin" | "diretoria" | "recrutador" | "gestor";
+  papelAtual: PapelUsuario;
   unidadeIdsAtuais: string[];
   unidades: Opcao[];
-  papelAtor: "admin" | "diretoria" | "recrutador" | "gestor";
+  papelAtor: PapelUsuario;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -93,12 +94,13 @@ export function EditarUsuarioDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recrutador">Recrutador(a)</SelectItem>
-                <SelectItem value="diretoria">Diretoria</SelectItem>
-                <SelectItem value="gestor">Gestor(a) solicitante</SelectItem>
                 {(papelAtor === "admin" || papelAtual === "admin") && (
                   <SelectItem value="admin">Administrador</SelectItem>
                 )}
+                <SelectItem value="diretoria">Diretoria</SelectItem>
+                <SelectItem value="gerente">Gerente</SelectItem>
+                <SelectItem value="gestor">Gestor(a) solicitante</SelectItem>
+                <SelectItem value="recrutador">Recrutador(a)</SelectItem>
               </SelectContent>
             </Select>
           </div>

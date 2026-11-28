@@ -54,6 +54,7 @@ export const PAPEL_LABEL: Record<string, string> = {
   diretoria: "Diretoria",
   recrutador: "Recrutador(a)",
   gestor: "Gestor(a) solicitante",
+  gerente: "Gerente",
 };
 
 export const PAPEL_BADGE_VARIANT: Record<string, string> = {
@@ -61,6 +62,7 @@ export const PAPEL_BADGE_VARIANT: Record<string, string> = {
   diretoria: "bg-primary text-primary-foreground border-primary",
   recrutador: "bg-blue-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500",
   gestor: "bg-amber-600 text-white border-amber-600 dark:bg-amber-500 dark:border-amber-500",
+  gerente: "bg-violet-600 text-white border-violet-600 dark:bg-violet-500 dark:border-violet-500",
 };
 
 // Tipos de notificação válidos no app (a tabela guarda `tipo` como texto livre —
