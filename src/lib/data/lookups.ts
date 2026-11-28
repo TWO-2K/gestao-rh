@@ -139,7 +139,7 @@ export const getFuncionarios = unstable_cache(
     }
     return data ?? [];
   },
-  ["lookups-funcionarios-ativos"],
+  ["lookups-funcionarios-ativos-v2"],
   { tags: ["funcionarios"], revalidate: 300 }
 );
 
