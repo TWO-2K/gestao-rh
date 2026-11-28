@@ -52,10 +52,10 @@ export default async function CadastrosPage({
 }) {
   const params = await searchParams;
   const profile = await getCurrentProfile();
-  if (!profile || profile.papel !== "admin") {
+  if (!profile || profile.papel === "gestor" || profile.papel === "diretoria") {
     redirect("/vagas");
   }
-  const isAdmin = profile.papel === "admin";
+  const podeEditar = profile.papel === "admin" || profile.papel === "recrutador";
 
   const paginaCargos = paginaDaUrl(params.pagina_cargos);
   const paginaFuncionarios = paginaDaUrl(params.pagina_funcionarios);
@@ -74,7 +74,7 @@ export default async function CadastrosPage({
         fallback={<CadastrosConteudoSkeleton />}
       >
         <CadastrosConteudo
-          isAdmin={isAdmin}
+          podeEditar={podeEditar}
           paginaCargos={paginaCargos}
           paginaFuncionarios={paginaFuncionarios}
         />
@@ -84,11 +84,11 @@ export default async function CadastrosPage({
 }
 
 async function CadastrosConteudo({
-  isAdmin,
+  podeEditar,
   paginaCargos,
   paginaFuncionarios,
 }: {
-  isAdmin: boolean;
+  podeEditar: boolean;
   paginaCargos: number;
   paginaFuncionarios: number;
 }) {
@@ -125,11 +125,11 @@ async function CadastrosConteudo({
 
   return (
       <CadastrosTabs
-        unidadesAction={isAdmin ? <NovaUnidadeForm /> : undefined}
-        setoresAction={isAdmin ? <NovoSetorForm /> : undefined}
-        cargosAction={isAdmin ? <NovoCargoForm setores={setores} /> : undefined}
-        horariosTrabalhoAction={isAdmin ? <NovoHorarioTrabalhoForm /> : undefined}
-        funcionariosAction={isAdmin ? <NovoFuncionarioForm unidades={unidades} /> : undefined}
+        unidadesAction={podeEditar ? <NovaUnidadeForm /> : undefined}
+        setoresAction={podeEditar ? <NovoSetorForm /> : undefined}
+        cargosAction={podeEditar ? <NovoCargoForm setores={setores} /> : undefined}
+        horariosTrabalhoAction={podeEditar ? <NovoHorarioTrabalhoForm /> : undefined}
+        funcionariosAction={podeEditar ? <NovoFuncionarioForm unidades={unidades} /> : undefined}
         unidadesContent={
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {unidades.map((u) => (
@@ -150,7 +150,7 @@ async function CadastrosConteudo({
                     </Badge>
                   </div>
                 </CardHeader>
-                {isAdmin && (
+                {podeEditar && (
                   <CardContent className="flex items-center gap-2">
                     <EditarUnidadeDialog id={u.id} nome={u.nome} codigo={u.codigo} />
                     <UnidadeAtivoToggle id={u.id} ativo={u.ativo} />
@@ -169,7 +169,7 @@ async function CadastrosConteudo({
                 nome={s.nome}
                 cargosCount={cargosCountPorSetorId.get(s.id) ?? 0}
                 vagasAbertasCount={vagasAbertasPorSetor[s.id] ?? 0}
-                somenteLeitura={!isAdmin}
+                somenteLeitura={!podeEditar}
               />
             ))}
           </div>
@@ -182,7 +182,7 @@ async function CadastrosConteudo({
                   <TableRow>
                     <TableHead>Cargo</TableHead>
                     <TableHead>Setores onde é usado</TableHead>
-                    {isAdmin && <TableHead className="w-28" />}
+                    {podeEditar && <TableHead className="w-28" />}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -198,7 +198,7 @@ async function CadastrosConteudo({
                             </Badge>
                           ))}
                         </TableCell>
-                        {isAdmin && (
+                        {podeEditar && (
                           <TableCell>
                             <EditarCargoDialog
                               id={cargo.id}
@@ -223,7 +223,7 @@ async function CadastrosConteudo({
                     <CardContent className="flex flex-col gap-3 py-4">
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-medium">{cargo.nome}</p>
-                        {isAdmin && (
+                        {podeEditar && (
                           <EditarCargoDialog
                             id={cargo.id}
                             nome={cargo.nome}
@@ -262,14 +262,14 @@ async function CadastrosConteudo({
               <TableHeader>
                 <TableRow>
                   <TableHead>Horário de trabalho</TableHead>
-                  {isAdmin && <TableHead className="w-36" />}
+                  {podeEditar && <TableHead className="w-36" />}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {horariosTrabalho.map((h) => (
                   <TableRow key={h.id}>
                     <TableCell className="font-medium">{h.nome}</TableCell>
-                    {isAdmin && (
+                    {podeEditar && (
                       <TableCell>
                         <EditarHorarioTrabalhoDialog id={h.id} nome={h.nome} />
                       </TableCell>
@@ -291,7 +291,7 @@ async function CadastrosConteudo({
                     <TableHead>Unidade</TableHead>
                     <TableHead>Gestor</TableHead>
                     <TableHead>Status</TableHead>
-                    {isAdmin && <TableHead className="w-56" />}
+                    {podeEditar && <TableHead className="w-56" />}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -310,7 +310,7 @@ async function CadastrosConteudo({
                           {f.ativo ? "Ativo" : "Inativo"}
                         </Badge>
                       </TableCell>
-                      {isAdmin && (
+                      {podeEditar && (
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <EditarFuncionarioDialog
@@ -350,7 +350,7 @@ async function CadastrosConteudo({
                       </span>
                       {f.eh_gestor && <Badge variant="outline">Gestor</Badge>}
                     </div>
-                    {isAdmin && (
+                    {podeEditar && (
                       <div className="flex items-center gap-2">
                         <EditarFuncionarioDialog
                           id={f.id}
