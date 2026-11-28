@@ -23,10 +23,9 @@ import { BloqueioToggle } from "@/components/usuarios/bloqueio-toggle";
 
 export default async function UsuariosPage() {
   const profile = await getCurrentProfile();
-  if (!profile || (profile.papel !== "admin" && profile.papel !== "diretoria")) {
+  if (!profile || profile.papel !== "admin") {
     redirect("/vagas");
   }
-  // Diretoria só visualiza usuários — não cria, edita, redefine senha ou bloqueia.
   const isAdmin = profile.papel === "admin";
 
   return (

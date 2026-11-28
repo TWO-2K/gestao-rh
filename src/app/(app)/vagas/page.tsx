@@ -211,13 +211,6 @@ async function VagasConteudo({
 
   return (
     <>
-      {total > 0 && (
-        <p className="-mt-2 shrink-0 text-sm text-muted-foreground">
-          {total} vaga{total === 1 ? "" : "s"} encontrada
-          {total === 1 ? "" : "s"}
-        </p>
-      )}
-
       {ehKanban ? (
         <div className="lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <VagasKanban

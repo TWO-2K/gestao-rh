@@ -26,17 +26,16 @@ export type NavItem = {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  adminOnly?: boolean;
   somenteAdmin?: boolean;
   hideFromGestor?: boolean;
 };
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Painel de Gestão", icon: LayoutDashboard, hideFromGestor: true },
-  { href: "/desempenho", label: "Desempenho", icon: TrendingUp, hideFromGestor: true },
+  { href: "/desempenho", label: "Desempenho", icon: TrendingUp, somenteAdmin: true, hideFromGestor: true },
   { href: "/vagas", label: "Vagas", icon: Briefcase },
-  { href: "/cadastros", label: "Cadastros", icon: FolderCog, adminOnly: true, hideFromGestor: true },
-  { href: "/usuarios", label: "Usuários", icon: Users, adminOnly: true, hideFromGestor: true },
+  { href: "/cadastros", label: "Cadastros", icon: FolderCog, somenteAdmin: true, hideFromGestor: true },
+  { href: "/usuarios", label: "Usuários", icon: Users, somenteAdmin: true, hideFromGestor: true },
   {
     href: "/configuracoes",
     label: "Configurações",
@@ -50,9 +49,7 @@ export function filtrarNavItems(papel: string): NavItem[] {
   const isGestor = papel === "gestor";
   return NAV_ITEMS.filter(
     (item) =>
-      (!item.adminOnly || papel === "admin" || papel === "diretoria") &&
-      (!item.somenteAdmin || papel === "admin") &&
-      (!isGestor || !item.hideFromGestor)
+      (!item.somenteAdmin || papel === "admin") && (!isGestor || !item.hideFromGestor)
   );
 }
 

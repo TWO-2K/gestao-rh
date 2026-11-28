@@ -20,10 +20,9 @@ export default async function DesempenhoPage({
   const params = await searchParams;
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
-  if (profile.papel === "gestor") redirect("/vagas");
+  if (profile.papel === "gestor" || profile.papel === "diretoria") redirect("/vagas");
 
-  const isDiretoria = profile.papel === "diretoria";
-  const isAdmin = profile.papel === "admin" || isDiretoria;
+  const isAdmin = profile.papel === "admin";
   const isRecrutador = !isAdmin;
 
   const recrutadores = isAdmin ? await getRecrutadores() : [];

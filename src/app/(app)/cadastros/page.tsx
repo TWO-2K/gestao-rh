@@ -52,10 +52,9 @@ export default async function CadastrosPage({
 }) {
   const params = await searchParams;
   const profile = await getCurrentProfile();
-  if (!profile || (profile.papel !== "admin" && profile.papel !== "diretoria")) {
+  if (!profile || profile.papel !== "admin") {
     redirect("/vagas");
   }
-  // Diretoria só visualiza cadastros — não cria nem edita nada aqui.
   const isAdmin = profile.papel === "admin";
 
   const paginaCargos = paginaDaUrl(params.pagina_cargos);
